@@ -1,0 +1,22 @@
+[
+  {
+    "num": 1,
+    "title": "Through the Wind and Waves, a Heart in Peach-Blossom Spring",
+    "date": "2026-10-30",
+    "slug": "001-jiang-chenglan",
+    "sourceUrl": "",
+    "sourceLabel": "陈鲁豫访谈（电影沙发）",
+    "ytId": null,
+    "cover": "/covers/001-jiang-chenglan.png",
+    "reports": [
+      {
+        "label": "大皖新闻 · 那三年像幻觉，她改名姜乘澜",
+        "url": "https://www.sina.cn/news/detail/5359775409505880.html"
+      },
+      {
+        "label": "公开讨论 · 身在无间，心在桃源",
+        "url": "https://www.sina.cn/news/detail/5359774113728921.html"
+      }
+    ]
+  }
+]

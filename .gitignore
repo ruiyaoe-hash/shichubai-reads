@@ -1,0 +1,18 @@
+# 构建产物（python3 tools/build.py 全量重建）
+site/ep/
+site/data/episodes.json
+site/disclaimer/
+site/archive/
+site/sitemap.xml
+site/llms.txt
+site/feed.xml
+site/404.html
+site/offline.html
+site/og/
+
+# 运行时
+__pycache__/
+*.pyc
+.DS_Store
+tools/.cache/
+tools/audio_sizes.json

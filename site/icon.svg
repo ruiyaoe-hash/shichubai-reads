@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#111111"/>
+  <rect x="40" y="40" width="432" height="432" fill="none" stroke="#f4f1ea" stroke-width="3"/>
+  <text x="256" y="318" text-anchor="middle" font-family="WenQuanYi Micro Hei, Noto Sans CJK SC, sans-serif" font-size="228" fill="#f7f4ee">白</text>
+  <rect x="400" y="56" width="56" height="56" fill="#b3261e"/>
+</svg>
