@@ -7,7 +7,7 @@
 输入：
   tools/lex-master.json     单集目录（最新在前）
   tools/translations.json   中文标题 / 嘉宾 / 简介
-  tools/feed_audio.json     合法音频直链；没有则留空，页面不放播放器
+  tools/feed_audio.json     站内音频路径或 https 直链；没有则留空，页面不放播放器
   site/zh/{slug}.html       中文精读正文片段
   site/data/zh-index.json   已有精读的 slug 列表
   site/covers/              自有封面（无 YouTube 时使用）
@@ -39,7 +39,7 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 1, 1, 1
+CSS_V, APP_V, EP_V = 2, 2, 2
 SITE_NAME = '时初白精读'
 TAGLINE = '在你想放弃时，把火递回来。'
 
@@ -230,7 +230,7 @@ def site_footer():
     </div>
     <div class="ft-bottom">
       <span>© 2026 时初白精读 · 非官方评论站点</span>
-      <span>不托管访谈音视频。中文精读是依据公开访谈与报道写的评论，不是官方文稿；表述以原访谈为准。</span>
+      <span>不托管访谈视频。个别单集的音频在站内播放，不是官方播客。中文精读是依据公开访谈与报道写的评论，不是官方文稿；表述以原访谈为准。</span>
     </div>
   </div>
 </footer>
@@ -301,6 +301,7 @@ EP_SHELL = """<!DOCTYPE html>
       {orig_line}
       {dek}
       <div class="ep-byline">{byline}</div>
+      <div class="ep-actions"><button type="button" class="fav-btn" id="favBtn" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg><span class="fav-label">收藏</span></button></div>
     </header>
     {media_html}
     <section class="content-tabs">
@@ -330,11 +331,23 @@ ZH = set(zh_index.get('slugs', []))
 
 
 def audio_for(e):
+    """feed_audio.json 的原始值。http(s) 为外链；以 / 开头的是站点根路径。"""
     by_num = feed.get('by_num') or {}
     by_slug = feed.get('by_slug') or {}
     if e.get('num') is not None and str(e['num']) in by_num:
         return by_num[str(e['num'])] or None
     return by_slug.get(e['slug']) or None
+
+
+def publish_audio(raw):
+    """页面里使用的地址。站内路径加上项目页前缀，外链保持原样。"""
+    if not raw:
+        return None
+    if raw.startswith(('http://', 'https://')):
+        return raw
+    if not raw.startswith('/'):
+        raw = '/' + raw
+    return sp(raw)
 
 
 def text_for(slug):
@@ -441,7 +454,8 @@ def build_page(i, eps):
     slug, num, title = e['slug'], e.get('num'), e['title']
     d = e.get('date') or ''
     y = e.get('ytId') or None
-    audio = audio_for(e)
+    audio_raw = audio_for(e)
+    audio = publish_audio(audio_raw)
     info = trans.get(slug, {})
     zh_title = norm_zh(info.get('zh'))
     guest, lede = info.get('guest'), info.get('desc')
@@ -472,7 +486,9 @@ def build_page(i, eps):
          "author": {"@type": "Organization", "name": SITE_NAME, "url": absu('/')},
          "publisher": {"@id": f'{DOMAIN}/#org'},
          "isBasedOn": {"@type": "Conversation", "name": e.get('sourceLabel') or plain,
-                       "description": "公开访谈。原片外链未核到之前，本页不嵌入、不托管视频。"}},
+                       "url": e.get('sourceUrl') or None,
+                       "description": "公开访谈。本页不嵌入、不托管视频。" if e.get('sourceUrl')
+                       else "公开访谈。原片外链未核到之前，本页不嵌入、不托管视频。"}},
         {"@type": "Organization", "@id": f'{DOMAIN}/#org', "name": SITE_NAME, "url": absu('/'),
          "slogan": TAGLINE},
         {"@type": "BreadcrumbList", "itemListElement": [
@@ -562,9 +578,13 @@ def build_page(i, eps):
         res.append('<li><span class="res-k">原片</span>TODO：补上访谈原片的合法外链（抖音 / 视频号或其他公开页面）。'
                    '未核到稳定地址之前，本页不嵌入、不下载、不托管任何视频。</li>')
     if audio:
-        res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}" target="_blank" rel="noopener">合法音频直链</a></li>')
+        if audio_raw.startswith(('http://', 'https://')):
+            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}" target="_blank" rel="noopener">合法音频直链</a></li>')
+        else:
+            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}">本站音频</a>'
+                       f'<span class="res-sub">供本页收听，不是官方播客</span></li>')
     else:
-        res.append('<li><span class="res-k">音频</span>暂无合法直链，故不放置播放器。</li>')
+        res.append('<li><span class="res-k">音频</span>暂无音频，故不放置播放器。</li>')
     for rep in e.get('reports') or []:
         if rep.get('url'):
             res.append(f'<li><span class="res-k">报道</span><a href="{H.escape(rep["url"])}" target="_blank" rel="noopener">{H.escape(rep.get("label") or rep["url"])}</a>'
@@ -728,8 +748,8 @@ def build_disclaimer():
     <header class="ep-head"><div class="ep-kicker">关于本站</div><h1 class="ep-title">免责声明与内容说明</h1></header>
     <div class="zh-article disclaimer-body">
       <p>{SITE_NAME}是一个按时间排列的中文精读站。它与访谈嘉宾、主持人、播出平台都没有隶属或合作关系。站点上的话不代表他们的立场。</p>
-      <h2>不托管音视频</h2>
-      <p>本站不下载、不保存、不分发访谈的视频或音频文件。原片只以合法外链指向公开来源。没有核到可用地址时，页面写明 TODO，并提示到来源页收听，不放播放器。</p>
+      <h2>视频与音频</h2>
+      <p>本站不保存、不分发访谈视频。个别单集把音频放在站点里，只供这一页收听，不是官方播客，也不代替原片。原片以页面上的来源链接为准。没有音频时不放播放器。</p>
       <h2>中文精读</h2>
       <p>「中文精读」是本站写的评论，依据已经公开的访谈与报道，不是官方文稿，也不是逐字翻译，未经嘉宾或制作方审阅。可能有理解偏差、压缩和遗漏。人名、数字和原话以原访谈为准。稿件若仍标着「骨架」或「待原片核对」，就不要把它当成记录。</p>
       <h2>代码与正文</h2>
@@ -742,7 +762,7 @@ def build_disclaimer():
 </main>"""
     out = SITE / 'disclaimer' / 'index.html'
     out.parent.mkdir(exist_ok=True)
-    out.write_text(page_shell('免责声明与内容说明 · 时初白精读', '本站不托管音视频。中文精读是评论，不是官方文稿。', body, path='/disclaimer/'))
+    out.write_text(page_shell('免责声明与内容说明 · 时初白精读', '本站不托管访谈视频。个别单集可在页内收听音频，不是官方播客。中文精读是评论，不是官方文稿。', body, path='/disclaimer/'))
     print('disclaimer: ok')
 
 
@@ -793,7 +813,7 @@ def build_sitemap(eps):
 
 def build_llms(eps):
     lines = [f'# {SITE_NAME}', '', f'> {TAGLINE}', '',
-             '中文精读是评论，不是官方文稿。本站不托管音视频。',
+             '中文精读是评论，不是官方文稿。本站不放访谈视频。个别单集可在网页里收听音频，不是官方播客。',
              f'目录：{absu("/archive/")}', f'RSS：{absu("/feed.xml")}', '']
     for x in eps:
         if x['s'] in ZH:
@@ -826,7 +846,9 @@ def build_feed(eps):
         if zh_file.exists():
             body = zh_file.read_text() + f'<hr><p>评论骨架，非官方文稿。网页：<a href="{url}">{url}</a></p>'
         au = audio_for(next(e for e in master if e['slug'] == slug))
-        enc = f'<enclosure url="{H.escape(au)}" type="audio/mpeg" length="0"/>' if au else ''
+        # 站内音频只给页面播放器，不写进 RSS enclosure，避免被当成官方播客。
+        enc = (f'<enclosure url="{H.escape(au)}" type="audio/mpeg" length="0"/>'
+               if au and au.startswith(('http://', 'https://')) else '')
         content = f'<content:encoded><![CDATA[{body.replace("]]>", "]]]]><![CDATA[>")}]]></content:encoded>' if body else ''
         items.append(
             f'<item><title>{H.escape(title)}</title><link>{url}</link>'
@@ -838,7 +860,7 @@ def build_feed(eps):
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">\n'
         f'<channel><title>{SITE_NAME}</title><link>{absu("/")}</link>'
         f'<atom:link href="{absu("/feed.xml")}" rel="self" type="application/rss+xml"/>'
-        f'<description>{H.escape(TAGLINE)} 中文精读全文。不托管音视频。</description>'
+        f'<description>{H.escape(TAGLINE)} 中文精读全文。个别单集可在网页里收听访谈音频，这不是官方播客。</description>'
         f'<language>zh-CN</language><lastBuildDate>{now}</lastBuildDate>'
         '<generator>shichubai-reads build.py</generator>\n'
         + '\n'.join(items) + '\n</channel></rss>\n')
@@ -926,14 +948,30 @@ def assert_site():
     for n in bad:
         if n in blob:
             raise SystemExit('leftover brand string: ' + n)
-    if re.search(r'(?:href|src)="/(?:ep/|style\.css|app\.js|ep\.js|feed\.xml|archive/|disclaimer/|data/|sw\.js)', blob):
+    if re.search(r'(?:href|src)="/(?:ep/|style\.css|app\.js|ep\.js|feed\.xml|archive/|disclaimer/|data/|sw\.js|audio/|covers/)', blob):
         raise SystemExit('found a site link that is not prefixed for project pages')
     ep = SITE / 'ep' / '001-jiang-chenglan' / 'index.html'
     text = ep.read_text()
-    if '来源页收听' not in text or 'audio-player' in text:
-        raise SystemExit('episode 001 should link out for listening and omit the player')
-    if 'TODO' not in text:
-        raise SystemExit('episode 001 should keep the source TODO')
+    hosted = sp('/audio/001-jiang-chenglan.mp3')
+    if 'audio-player' not in text or f'src="{hosted}"' not in text:
+        raise SystemExit('episode 001 should play the self-hosted mp3')
+    if 'youtube.com/watch?v=NPOOl6g9z6s' not in text:
+        raise SystemExit('episode 001 should link to the source interview')
+    if 'covers/001-jiang-chenglan.jpg' not in text:
+        raise SystemExit('episode 001 cover is not the release still')
+    if not (SITE / 'audio' / '001-jiang-chenglan.mp3').is_file():
+        raise SystemExit('self-hosted mp3 missing')
+    if 'id="favBtn"' not in text:
+        raise SystemExit('episode page is missing the favorite button')
+    idx = (SITE / 'index.html').read_text()
+    if 'data-f="fav"' not in idx or 'data-f="hist"' not in idx:
+        raise SystemExit('home filters are missing history or favorites')
+    for name in ('app.js', 'ep.js'):
+        src = (SITE / name).read_text()
+        if 'scb-fav' not in src:
+            raise SystemExit(name + ' is missing the favorites store')
+        if 'lex-hist' not in src:
+            raise SystemExit(name + ' lost the reading history store')
     print('checks: ok')
 
 

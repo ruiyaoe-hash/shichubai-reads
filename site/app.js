@@ -25,6 +25,9 @@
   }
   let DATA = [];
   let HIST = {};
+  /* 收藏：scb-fav = {slug: {at}}。只存在这台浏览器，和 lex-hist 分开。 */
+  let FAV = {};
+  const FAV_KEY = 'scb-fav';
   const state = { q: '', f: 'all', sort: 'desc' };
   let LIST = [];
   let rendered = 0;
@@ -111,6 +114,7 @@
       if (state.f === 'zh' && !e.r) return false;
       if (state.f === 'tr' && !e.tr) return false;
       if (state.f === 'hist' && !HIST[e.s]) return false;
+      if (state.f === 'fav' && !FAV[e.s]) return false;
       return true;
     });
     const dir = state.sort === 'asc' ? -1 : 1;
@@ -120,6 +124,8 @@
         .map((x) => x[0]);
     } else if (state.f === 'hist') {
       list.sort((a, b) => (HIST[b.s].at || 0) - (HIST[a.s].at || 0));
+    } else if (state.f === 'fav') {
+      list.sort((a, b) => ((FAV[b.s] && FAV[b.s].at) || 0) - ((FAV[a.s] && FAV[a.s].at) || 0));
     } else if (dir === -1) {
       list = list.slice().reverse();
     }
@@ -156,10 +162,13 @@
     const date = e.d ? e.d.slice(0, 7).replace('-', '.') : '';
     const p = progressOf(e);
     const prog = p > 0.01 ? `<span class="prog" aria-hidden="true"><i style="width:${(p * 100).toFixed(1)}%"></i></span>` : '';
+    const saved = FAV[e.s]
+      ? '<span class="fav-mark" title="已收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg></span>'
+      : '';
     const en = e.zh ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
     const desc = toks.length && e.ds ? `<div class="card-desc">${hl(e.ds, toks)}</div>` : '';
     return `<a class="card" href="${site('/ep/' + e.s + '/')}">
-      <div class="thumb">${thumb}${prog}</div>
+      <div class="thumb">${thumb}${saved}${prog}</div>
       <div class="card-body">
         <div class="card-kicker"><span class="ep-n">${num}</span><span>${date}</span>${e.r ? '<span class="zh-tag">中文精读</span>' : ''}</div>
         <div class="card-title">${hl(e._zh, toks)}</div>
@@ -170,6 +179,7 @@
 
   let curToks = [];
   function resetRender() {
+    updateCounts();
     curToks = compute();
     rendered = 0;
     AUTO = 90;
@@ -201,7 +211,7 @@
   function renderResultLine() {
     const el = $('#resultLine');
     const filtered = state.q.trim() || state.f !== 'all';
-    const label = { zh: '中文精读', tr: '有文稿', hist: '看过的' }[state.f];
+    const label = { zh: '中文精读', tr: '有文稿', hist: '看过的', fav: '收藏' }[state.f];
     if (filtered) {
       el.innerHTML = `<h2>${state.q.trim() ? '搜索结果' : label}<small>${LIST.length} 期${state.q.trim() ? `与「${esc(state.q.trim())}」相关` : ''}</small></h2>`;
     } else {
@@ -212,6 +222,16 @@
   const SUGGEST = ['姜乘澜', '鲁豫', '桃源', '改名'];
   function emptyHTML() {
     const q = state.q.trim();
+    if (state.f === 'fav' && !q) {
+      return `<div class="empty"><h3>还没有收藏</h3>
+        <p>打开一篇精读，点标题下方的「收藏」。收藏只留在这台浏览器里，清除网站数据后会消失，也不会同步到别的设备。</p>
+        <div class="chips"><button type="button" class="chip" data-reset>回到全部单集</button></div></div>`;
+    }
+    if (state.f === 'fav') {
+      return `<div class="empty"><h3>收藏里没有找到「${esc(q)}」</h3>
+        <p>可以换一个嘉宾、译名或话题。多个词之间用空格分开。</p>
+        <div class="chips"><button type="button" class="chip" data-reset>在全部单集中搜索</button></div></div>`;
+    }
     const chips = SUGGEST.map((s) => `<button type="button" class="chip" data-q="${esc(s)}">${esc(s)}</button>`).join('');
     const reset = state.f !== 'all' ? '<button type="button" class="chip" data-reset>在全部单集中搜索</button>' : '';
     return `<div class="empty"><h3>没有找到${q ? `「${esc(q)}」` : '符合条件的单集'}</h3>
@@ -265,6 +285,11 @@
   }
 
   /* ---------- 继续收听 / 阅读 ---------- */
+  function loadFav() {
+    try { FAV = JSON.parse(ls.get(FAV_KEY) || '{}') || {}; } catch (e) { FAV = {}; }
+    if (!FAV || typeof FAV !== 'object' || Array.isArray(FAV)) FAV = {};
+  }
+
   function loadHist() {
     try { HIST = JSON.parse(ls.get('lex-hist') || '{}') || {}; } catch (e) { HIST = {}; }
     // 兼容旧版只存了 lex-pos-* 的收听进度
@@ -321,7 +346,7 @@
   function readURL() {
     const p = new URLSearchParams(location.search);
     state.q = p.get('q') || '';
-    state.f = ['zh', 'tr', 'hist'].includes(p.get('f')) ? p.get('f') : 'all';
+    state.f = ['zh', 'tr', 'hist', 'fav'].includes(p.get('f')) ? p.get('f') : 'all';
     state.sort = p.get('sort') === 'asc' ? 'asc' : 'desc';
     input.value = state.q;
   }
@@ -343,11 +368,18 @@
   function syncSearchBox() { input.parentNode.classList.toggle('has-q', !!input.value); }
 
   function updateCounts() {
-    const n = { zh: DATA.filter((e) => e.r).length, tr: DATA.filter((e) => e.tr).length, hist: DATA.filter((e) => HIST[e.s]).length };
+    const n = {
+      zh: DATA.filter((e) => e.r).length,
+      tr: DATA.filter((e) => e.tr).length,
+      hist: DATA.filter((e) => HIST[e.s]).length,
+      fav: DATA.filter((e) => FAV[e.s]).length,
+    };
     $$('[data-n]').forEach((el) => { el.textContent = n[el.dataset.n]; });
     $('[data-f="tr"]').hidden = n.tr === DATA.length || !n.tr;
     $('[data-f="hist"]').hidden = !n.hist;
     if (state.f === 'hist' && !n.hist) setFilter('all');
+    /* 没有收藏时收起芯片，和「看过」一样。已经停在 ?f=fav 时留着，空列表才有地方可看。 */
+    $('[data-f="fav"]').hidden = !n.fav && state.f !== 'fav';
   }
 
   async function init() {
@@ -361,6 +393,7 @@
     DATA = (await res.json()).episodes;
     DATA.forEach((e, i) => { e._i = i; indexEntry(e); });
     loadHist();
+    loadFav();
     updateCounts();
     renderMast();
     $('#contClear').addEventListener('click', clearHist);
@@ -407,8 +440,12 @@
     io.observe($('#sentinel'));
     window.addEventListener('hashchange', legacyRedirect);
     if (location.hash === '#search') { input.focus(); history.replaceState(null, '', location.pathname + location.search); }
-    // 从单集页返回时刷新进度
-    window.addEventListener('pageshow', (ev) => { if (ev.persisted) { loadHist(); updateCounts(); resetRender(); } });
+    // 从单集页返回（往返缓存）或另一标签改了本地记录时，刷新进度和收藏
+    const refreshLocal = () => { if (!DATA.length) return; loadHist(); loadFav(); resetRender(); };
+    window.addEventListener('pageshow', (ev) => { if (ev.persisted) refreshLocal(); });
+    window.addEventListener('storage', (ev) => {
+      if (ev.key === 'lex-hist' || ev.key === FAV_KEY || (ev.key && ev.key.indexOf('lex-pos-') === 0)) refreshLocal();
+    });
   }
 
   // 自动加载到 AUTO 期后改为手动「再看 30 期」，让页脚（订阅 / 支持入口）始终够得着

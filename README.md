@@ -4,7 +4,7 @@
 
 > 在你想放弃时，把火递回来。
 
-不设话题分类，也不做情绪入口。首页就是检索、全部 / 中文精读，以及最新、最早。一期一张卡片。
+不设话题分类，也不做情绪入口。首页就是检索、按时间排列的全部单集，以及中文精读。看过和收藏只在这台浏览器里有记录时才出现。一期一张卡片。
 
 计划中的地址：[https://ruiyaoe-hash.github.io/shichubai-reads/](https://ruiyaoe-hash.github.io/shichubai-reads/)
 
@@ -14,7 +14,17 @@
 |---|---|---|---|
 | 001 | 姜乘澜 | 乘风破浪，心在桃源 | `/ep/001-jiang-chenglan/` |
 
-来源是陈鲁豫的访谈（公开报道）。正文是评论骨架，不是官方文稿，也不是逐字稿。原片的稳定外链还没核到，资源区留着 TODO。站内不放播放器，也不托管任何视频或音频。
+来源是陈鲁豫的电影沙发、创作阶梯计划里的公开访谈：[YouTube 上的这一期](https://www.youtube.com/watch?v=NPOOl6g9z6s)。正文是评论骨架，不是官方文稿，也不是逐字稿。
+
+第 001 期的音频放在 `site/audio/001-jiang-chenglan.mp3`，由 GitHub Pages 直接提供，单集页用它播放。同一份文件也在 [Release `audio-001`](https://github.com/ruiyaoe-hash/shichubai-reads/releases/tag/audio-001)。这不是官方播客的 enclosure。站点不放视频文件。封面用的是这一期的画面，默认黑白，悬停回到彩色。
+
+## 这台浏览器里的记录
+
+阅读进度和收藏都写在这台浏览器的 localStorage 里。没有账号。
+
+阅读和收听进度用键 `lex-hist`。首页的「继续」和「看过」读它。收藏用键 `scb-fav`，每一项是 `{at: 时间戳}`。单集页标题下有「收藏 / 已收藏」。有收藏时，首页会出现「收藏」筛选，地址是 `?f=fav`。这个链接可以分享，但另一台设备上的收藏是空的。
+
+清除这台浏览器里本站的网站数据后，进度和收藏会一起消失，也不会跟着你到另一台设备。
 
 ## 本地构建
 
@@ -53,7 +63,7 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 
 1. 在 `tools/lex-master.json` 数组**最前面**加一条：`num`、`title`（英文或原文题）、`date`（`YYYY-MM-DD`）、`slug`、`sourceUrl`（合法外链，没有就 `""`）、`sourceLabel`、`ytId`（没有就 `null`）、`cover`（站内封面路径，如 `/covers/002-xxx.png`）、`reports`（公开报道，可空数组）。
 2. 在 `tools/translations.json` 加上同一个 `slug`：`zh`（中文标题）、`guest`、`desc`（一两句简介）。
-3. 若有**合法**音频直链，写入 `tools/feed_audio.json` 的 `by_num` 或 `by_slug`。没有就留空。空的时候页面不渲染播放器，只提示到来源页收听。
+3. 若这一期有可在站内播放的音频，把文件放到 `site/audio/{slug}.mp3`，并在 `tools/feed_audio.json` 的 `by_num` 或 `by_slug` 写上以 `/` 开头的站内路径。构建时会加上项目页前缀。也可以写 https 直链。没有就留空。空的时候页面不渲染播放器。大文件也可以另外放在 GitHub Release，页面仍以 `site/audio/` 里的文件为准。
 4. 把精读正文片段放到 `site/zh/{slug}.html`（只要段落和 `h2`，不要整页 HTML）。把 `slug` 加进 `site/data/zh-index.json` 的 `slugs`。
 5. 封面放到 `site/covers/`。有 YouTube id 时可以不放封面，卡片会用那张图，悬停仍会从黑白回到彩色。
 6. `python3 tools/build.py`。
@@ -83,5 +93,5 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 
 - `site/zh/` 里的中文不是 MIT 许可的一部分。
 - 精读是评论，依据公开访谈和报道，不是官方文稿，可能有偏差。原话以原访谈为准。
-- 本站不托管音视频。没有合法直链就不放播放器。
+- 个别单集的音频可以放在 `site/audio/`，随 GitHub Pages 发布。更大的副本也可以留在 GitHub Release。页内播放供对照阅读，不是官方播客的 enclosure。没有音频就不放播放器。视频文件不进仓库。
 - 转载正文请署名「时初白精读」，并链接到对应页面。
