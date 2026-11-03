@@ -1,4 +1,8 @@
 {
-  "by_num": {},
-  "by_slug": {}
+  "by_num": {
+    "1": "/audio/001-jiang-chenglan.mp3"
+  },
+  "by_slug": {
+    "001-jiang-chenglan": "/audio/001-jiang-chenglan.mp3"
+  }
 }
