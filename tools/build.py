@@ -39,7 +39,7 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 1, 1, 1
+CSS_V, APP_V, EP_V = 2, 2, 2
 SITE_NAME = '时初白精读'
 TAGLINE = '在你想放弃时，把火递回来。'
 
@@ -301,6 +301,7 @@ EP_SHELL = """<!DOCTYPE html>
       {orig_line}
       {dek}
       <div class="ep-byline">{byline}</div>
+      <div class="ep-actions"><button type="button" class="fav-btn" id="favBtn" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg><span class="fav-label">收藏</span></button></div>
     </header>
     {media_html}
     <section class="content-tabs">
@@ -934,6 +935,17 @@ def assert_site():
         raise SystemExit('episode 001 should link out for listening and omit the player')
     if 'TODO' not in text:
         raise SystemExit('episode 001 should keep the source TODO')
+    if 'id="favBtn"' not in text:
+        raise SystemExit('episode page is missing the favorite button')
+    idx = (SITE / 'index.html').read_text()
+    if 'data-f="fav"' not in idx or 'data-f="hist"' not in idx:
+        raise SystemExit('home filters are missing history or favorites')
+    for name in ('app.js', 'ep.js'):
+        src = (SITE / name).read_text()
+        if 'scb-fav' not in src:
+            raise SystemExit(name + ' is missing the favorites store')
+        if 'lex-hist' not in src:
+            raise SystemExit(name + ' lost the reading history store')
     print('checks: ok')
 
 

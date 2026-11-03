@@ -26,6 +26,54 @@
   }
   const histGet = () => { try { return (JSON.parse(ls.get('lex-hist') || '{}') || {})[slug] || {}; } catch (e) { return {}; } };
 
+  /* ---------- 收藏：scb-fav = {slug: {at}}。没有账号，只留在这台浏览器 ---------- */
+  const FAV_KEY = 'scb-fav';
+  function favMap() {
+    try {
+      const v = JSON.parse(ls.get(FAV_KEY) || '{}');
+      if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+      return v;
+    } catch (e) { return {}; }
+  }
+  function favSave(map) { ls.set(FAV_KEY, JSON.stringify(map)); }
+  function favHas() { return !!(slug && Object.prototype.hasOwnProperty.call(favMap(), slug)); }
+  function favToggle() {
+    if (!slug) return false;
+    const map = favMap();
+    if (Object.prototype.hasOwnProperty.call(map, slug)) delete map[slug];
+    else map[slug] = { at: Date.now() };
+    favSave(map);
+    return Object.prototype.hasOwnProperty.call(map, slug);
+  }
+  function mountFav() {
+    if (!slug) return;
+    const head = $('.ep-head');
+    if (!head) return;
+    let btn = $('#favBtn');
+    if (!btn) {
+      const wrap = document.createElement('div');
+      wrap.className = 'ep-actions';
+      wrap.innerHTML = `<button type="button" class="fav-btn" id="favBtn" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg>
+        <span class="fav-label">收藏</span></button>`;
+      head.appendChild(wrap);
+      btn = $('#favBtn');
+    }
+    const label = $('.fav-label', btn);
+    const sync = () => {
+      const on = favHas();
+      btn.hidden = false;
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (label) label.textContent = on ? '已收藏' : '收藏';
+      btn.title = on ? '已收藏。再点一次就会取消。' : '收藏这篇。只写在这台浏览器里。';
+    };
+    btn.addEventListener('click', () => { favToggle(); sync(); });
+    sync();
+    window.addEventListener('pageshow', sync);
+    window.addEventListener('storage', (ev) => { if (ev.key === FAV_KEY) sync(); });
+  }
+  mountFav();
+
   /* ---------- 返回顶部 ---------- */
   const toTop = document.createElement('button');
   toTop.id = 'toTop';

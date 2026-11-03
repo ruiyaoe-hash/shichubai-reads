@@ -3,7 +3,7 @@
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页
    BASE 取脚本所在目录，这样项目页 /shichubai-reads/ 与日后的域名根路径都能用。 */
-const VERSION = 'scb-v1';
+const VERSION = 'scb-v2';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
