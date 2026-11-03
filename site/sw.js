@@ -60,7 +60,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // 音频走浏览器自身的范围请求，不经 SW；统计脚本也不缓存
+  // 音频走浏览器自身的范围请求，不经 SW。GitHub Release 上以 .mp3 / .m4a 结尾的地址同样不拦截。
   if (/\.(mp3|m4a)$/i.test(url.pathname)) return;
   const sameOrigin = url.origin === self.location.origin;
   if (req.mode === 'navigate' || (sameOrigin && /\.(json|md|xml|txt)$/.test(url.pathname))) {
