@@ -1,8 +1,9 @@
 {
+  "note": "每期音频只放在 GitHub Release，标签为 audio-001、audio-002……。这里写 releases/download 的 https 绝对地址。不要把 mp3 放进 git 或 site/audio/。这些标签只放内容文件，不要用来发布站点版本。",
   "by_num": {
-    "1": "/audio/001-jiang-chenglan.mp3"
+    "1": "https://github.com/ruiyaoe-hash/shichubai-reads/releases/download/audio-001/001-jiang-chenglan.mp3"
   },
   "by_slug": {
-    "001-jiang-chenglan": "/audio/001-jiang-chenglan.mp3"
+    "001-jiang-chenglan": "https://github.com/ruiyaoe-hash/shichubai-reads/releases/download/audio-001/001-jiang-chenglan.mp3"
   }
 }

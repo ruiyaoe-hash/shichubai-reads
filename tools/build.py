@@ -7,7 +7,9 @@
 输入：
   tools/lex-master.json     单集目录（最新在前）
   tools/translations.json   中文标题 / 嘉宾 / 简介
-  tools/feed_audio.json     站内音频路径或 https 直链；没有则留空，页面不放播放器
+  tools/feed_audio.json     播放地址。单集 mp3 只用 GitHub Release 的 https 绝对地址
+                            （标签 audio-001、audio-002……）；没有则留空，页面不放播放器。
+                            这些标签只放内容文件，不要用来发布站点版本。不要把 mp3 放进 git。
   site/zh/{slug}.html       中文精读正文片段
   site/data/zh-index.json   已有精读的 slug 列表
   site/covers/              自有封面（无 YouTube 时使用）
@@ -330,8 +332,22 @@ zh_index = json.load(open(SITE / 'data' / 'zh-index.json'))
 ZH = set(zh_index.get('slugs', []))
 
 
+# 内容音频：每期一个 Release，标签 audio-NNN。不是站点版本发布。
+RELEASE_AUDIO_RE = re.compile(
+    r'^https://github\.com/[\w.-]+/[\w.-]+/releases/download/audio-\d+/[^/?#]+\.mp3$'
+)
+EP001_AUDIO = (
+    'https://github.com/ruiyaoe-hash/shichubai-reads/releases/download/'
+    'audio-001/001-jiang-chenglan.mp3'
+)
+
+
+def is_release_audio(raw):
+    return bool(raw) and bool(RELEASE_AUDIO_RE.match(raw))
+
+
 def audio_for(e):
-    """feed_audio.json 的原始值。http(s) 为外链；以 / 开头的是站点根路径。"""
+    """feed_audio.json 的原始值。Release 用 https 绝对地址；以 / 开头的是站点根路径。"""
     by_num = feed.get('by_num') or {}
     by_slug = feed.get('by_slug') or {}
     if e.get('num') is not None and str(e['num']) in by_num:
@@ -340,7 +356,7 @@ def audio_for(e):
 
 
 def publish_audio(raw):
-    """页面里使用的地址。站内路径加上项目页前缀，外链保持原样。"""
+    """页面里使用的地址。https 原样保留，不拼 BASE_PATH；站内路径才加项目页前缀。"""
     if not raw:
         return None
     if raw.startswith(('http://', 'https://')):
@@ -348,6 +364,23 @@ def publish_audio(raw):
     if not raw.startswith('/'):
         raw = '/' + raw
     return sp(raw)
+
+
+def check_feed_audio():
+    """单集 mp3 只能指向 audio-NNN Release，不能再指向仓库里的文件。"""
+    for bucket in ('by_num', 'by_slug'):
+        for key, raw in (feed.get(bucket) or {}).items():
+            if not raw:
+                continue
+            if not is_release_audio(raw):
+                raise SystemExit(
+                    f'feed_audio {bucket}[{key}] must be a GitHub Release download URL '
+                    f'on tag audio-NNN, not a file in the repo: {raw}'
+                )
+    got_num = (feed.get('by_num') or {}).get('1')
+    got_slug = (feed.get('by_slug') or {}).get('001-jiang-chenglan')
+    if got_num != EP001_AUDIO or got_slug != EP001_AUDIO:
+        raise SystemExit('episode 001 audio must be the audio-001 Release asset')
 
 
 def text_for(slug):
@@ -578,10 +611,13 @@ def build_page(i, eps):
         res.append('<li><span class="res-k">原片</span>TODO：补上访谈原片的合法外链（抖音 / 视频号或其他公开页面）。'
                    '未核到稳定地址之前，本页不嵌入、不下载、不托管任何视频。</li>')
     if audio:
-        if audio_raw.startswith(('http://', 'https://')):
-            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}" target="_blank" rel="noopener">合法音频直链</a></li>')
+        if is_release_audio(audio_raw):
+            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}" target="_blank" rel="noopener">访谈音频</a>'
+                       f'<span class="res-sub">供本页收听，不是官方播客</span></li>')
+        elif audio_raw.startswith(('http://', 'https://')):
+            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}" target="_blank" rel="noopener">访谈音频</a></li>')
         else:
-            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}">本站音频</a>'
+            res.append(f'<li><span class="res-k">音频</span><a href="{H.escape(audio)}">访谈音频</a>'
                        f'<span class="res-sub">供本页收听，不是官方播客</span></li>')
     else:
         res.append('<li><span class="res-k">音频</span>暂无音频，故不放置播放器。</li>')
@@ -846,9 +882,9 @@ def build_feed(eps):
         if zh_file.exists():
             body = zh_file.read_text() + f'<hr><p>评论骨架，非官方文稿。网页：<a href="{url}">{url}</a></p>'
         au = audio_for(next(e for e in master if e['slug'] == slug))
-        # 站内音频只给页面播放器，不写进 RSS enclosure，避免被当成官方播客。
+        # 页面播放用的访谈音频（含 audio-NNN Release）不写进 RSS enclosure，避免被当成官方播客。
         enc = (f'<enclosure url="{H.escape(au)}" type="audio/mpeg" length="0"/>'
-               if au and au.startswith(('http://', 'https://')) else '')
+               if au and au.startswith(('http://', 'https://')) and not is_release_audio(au) else '')
         content = f'<content:encoded><![CDATA[{body.replace("]]>", "]]]]><![CDATA[>")}]]></content:encoded>' if body else ''
         items.append(
             f'<item><title>{H.escape(title)}</title><link>{url}</link>'
@@ -950,17 +986,29 @@ def assert_site():
             raise SystemExit('leftover brand string: ' + n)
     if re.search(r'(?:href|src)="/(?:ep/|style\.css|app\.js|ep\.js|feed\.xml|archive/|disclaimer/|data/|sw\.js|audio/|covers/)', blob):
         raise SystemExit('found a site link that is not prefixed for project pages')
+    check_feed_audio()
     ep = SITE / 'ep' / '001-jiang-chenglan' / 'index.html'
     text = ep.read_text()
-    hosted = sp('/audio/001-jiang-chenglan.mp3')
-    if 'audio-player' not in text or f'src="{hosted}"' not in text:
-        raise SystemExit('episode 001 should play the self-hosted mp3')
+    if 'audio-player' not in text or f'src="{EP001_AUDIO}"' not in text:
+        raise SystemExit('episode 001 should play the audio-001 Release asset')
+    if '/audio/001-jiang-chenglan.mp3' in text or f'{BASE}/audio/' in text:
+        raise SystemExit('episode 001 must not point at a Pages audio path')
+    if '访谈音频' not in text or '供本页收听，不是官方播客' not in text:
+        raise SystemExit('episode 001 audio note should stay visitor-facing')
+    if '合法音频直链' in text:
+        raise SystemExit('episode page should not use editor jargon for the audio link')
+    if '陈鲁豫的电影沙发' not in text or '创作阶梯计划' not in text:
+        raise SystemExit('episode 001 should keep the interview attribution')
     if 'youtube.com/watch?v=NPOOl6g9z6s' not in text:
         raise SystemExit('episode 001 should link to the source interview')
     if 'covers/001-jiang-chenglan.jpg' not in text:
         raise SystemExit('episode 001 cover is not the release still')
-    if not (SITE / 'audio' / '001-jiang-chenglan.mp3').is_file():
-        raise SystemExit('self-hosted mp3 missing')
+    mp3s = [p for p in SITE.rglob('*.mp3') if p.is_file()]
+    if mp3s:
+        raise SystemExit('mp3 must not live in the site tree: ' + ', '.join(str(p.relative_to(SITE)) for p in mp3s))
+    feed_xml = (SITE / 'feed.xml').read_text()
+    if '001-jiang-chenglan.mp3' in feed_xml or '<enclosure' in feed_xml:
+        raise SystemExit('Release audio must not be an RSS enclosure')
     if 'id="favBtn"' not in text:
         raise SystemExit('episode page is missing the favorite button')
     idx = (SITE / 'index.html').read_text()

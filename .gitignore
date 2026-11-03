@@ -10,6 +10,9 @@ site/404.html
 site/offline.html
 site/og/
 
+# 单集 mp3 只放在 GitHub Release（标签 audio-NNN），不要再提交进仓库
+site/audio/
+
 # 运行时
 __pycache__/
 *.pyc

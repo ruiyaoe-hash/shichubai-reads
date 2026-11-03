@@ -16,7 +16,11 @@
 
 来源是陈鲁豫的电影沙发、创作阶梯计划里的公开访谈：[YouTube 上的这一期](https://www.youtube.com/watch?v=NPOOl6g9z6s)。正文是评论骨架，不是官方文稿，也不是逐字稿。
 
-第 001 期的音频放在 `site/audio/001-jiang-chenglan.mp3`，由 GitHub Pages 直接提供，单集页用它播放。同一份文件也在 [Release `audio-001`](https://github.com/ruiyaoe-hash/shichubai-reads/releases/tag/audio-001)。这不是官方播客的 enclosure。站点不放视频文件。封面用的是这一期的画面，默认黑白，悬停回到彩色。
+第 001 期的音频不在仓库里。单集页播放的是 [Release `audio-001`](https://github.com/ruiyaoe-hash/shichubai-reads/releases/tag/audio-001) 上的文件：
+
+`https://github.com/ruiyaoe-hash/shichubai-reads/releases/download/audio-001/001-jiang-chenglan.mp3`
+
+构建时这个 https 地址原样写进播放器，不会再加 `/shichubai-reads/`。浏览器按范围请求收听，GitHub Pages 不托管这份 mp3。这不是官方播客的 enclosure。站点不放视频文件。封面仍在 `site/covers/`，默认黑白，悬停回到彩色。
 
 ## 这台浏览器里的记录
 
@@ -34,7 +38,7 @@
 python3 tools/build.py
 ```
 
-发布根目录是构建后的 `site/`。链接带项目页前缀 `/shichubai-reads/`，这样在 GitHub Pages 的项目站点上能直接打开，不必先绑域名。没有使用 `<base>`：它会把文内目录的 `#` 锚点解析到站点根，侧栏会跳错页。
+发布根目录是构建后的 `site/`。链接带项目页前缀 `/shichubai-reads/`，这样在 GitHub Pages 的项目站点上能直接打开，不必先绑域名。没有使用 `<base>`：它会把文内目录的 `#` 锚点解析到站点根，侧栏会跳错页。以 `https://` 开头的音频地址不会再拼 `BASE_PATH`；页面、封面、样式和脚本仍走项目页前缀。本地预览时，播放会向 GitHub 请求 Release 上的 mp3，需要能访问外网。
 
 本地要按将来的网址预览：
 
@@ -63,7 +67,7 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 
 1. 在 `tools/lex-master.json` 数组**最前面**加一条：`num`、`title`（英文或原文题）、`date`（`YYYY-MM-DD`）、`slug`、`sourceUrl`（合法外链，没有就 `""`）、`sourceLabel`、`ytId`（没有就 `null`）、`cover`（站内封面路径，如 `/covers/002-xxx.png`）、`reports`（公开报道，可空数组）。
 2. 在 `tools/translations.json` 加上同一个 `slug`：`zh`（中文标题）、`guest`、`desc`（一两句简介）。
-3. 若这一期有可在站内播放的音频，把文件放到 `site/audio/{slug}.mp3`，并在 `tools/feed_audio.json` 的 `by_num` 或 `by_slug` 写上以 `/` 开头的站内路径。构建时会加上项目页前缀。也可以写 https 直链。没有就留空。空的时候页面不渲染播放器。大文件也可以另外放在 GitHub Release，页面仍以 `site/audio/` 里的文件为准。
+3. 若这一期要在页内播放音频，为它单独发一个 GitHub Release，标签必须是 `audio-002`（第 003 期则是 `audio-003`，以此类推）。把 mp3 作为该 Release 的附件上传。不要把文件提交进 git，也不要放进 `site/audio/`。这些 `audio-NNN` 标签只放这一期的内容文件，不要用来发布站点版本。然后在 `tools/feed_audio.json` 的 `by_num` 和 `by_slug` 写上附件的绝对地址，形如 `https://github.com/ruiyaoe-hash/shichubai-reads/releases/download/audio-002/002-….mp3`。`https://` 开头的地址会原样进入播放器。没有音频就留空，页面不放播放器。
 4. 把精读正文片段放到 `site/zh/{slug}.html`（只要段落和 `h2`，不要整页 HTML）。把 `slug` 加进 `site/data/zh-index.json` 的 `slugs`。
 5. 封面放到 `site/covers/`。有 YouTube id 时可以不放封面，卡片会用那张图，悬停仍会从黑白回到彩色。
 6. `python3 tools/build.py`。
@@ -93,5 +97,5 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 
 - `site/zh/` 里的中文不是 MIT 许可的一部分。
 - 精读是评论，依据公开访谈和报道，不是官方文稿，可能有偏差。原话以原访谈为准。
-- 个别单集的音频可以放在 `site/audio/`，随 GitHub Pages 发布。更大的副本也可以留在 GitHub Release。页内播放供对照阅读，不是官方播客的 enclosure。没有音频就不放播放器。视频文件不进仓库。
+- 单集音频只放在 GitHub Release，一期一个标签：`audio-001`、`audio-002`……。仓库和 GitHub Pages 不托管这些 mp3。播放器使用 `releases/download/audio-NNN/…` 的绝对地址，供对照阅读，不是官方播客的 enclosure。没有音频就不放播放器。封面可以留在 `site/covers/`。视频文件不进仓库。不要用 `audio-NNN` 发布站点版本。
 - 转载正文请署名「时初白精读」，并链接到对应页面。
