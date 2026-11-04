@@ -12,9 +12,9 @@
 
 | 期 | 嘉宾 | 题目 | 页面 |
 |---|---|---|---|
-| 001 | 姜乘澜 | 乘风破浪，心在桃源 | `/ep/001-jiang-chenglan/` |
+| 001 | 姜乘澜 | 三个名字，三幕人生 | `/ep/001-jiang-chenglan/` |
 
-来源是陈鲁豫的电影沙发、创作阶梯计划里的公开访谈：[YouTube 上的这一期](https://www.youtube.com/watch?v=NPOOl6g9z6s)。正文是评论骨架，不是官方文稿，也不是逐字稿。
+来源是陈鲁豫的电影沙发、创作阶梯计划里的公开访谈：[YouTube 上的这一期](https://www.youtube.com/watch?v=NPOOl6g9z6s)。正文是对照 Release 上的访谈音频写的中文精读，不是官方授权文稿，也不是逐字稿。
 
 第 001 期的音频不在仓库里。单集页播放的是 [Release `audio-001`](https://github.com/ruiyaoe-hash/shichubai-reads/releases/tag/audio-001) 上的文件：
 

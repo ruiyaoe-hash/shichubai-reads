@@ -250,7 +250,7 @@ def colophon():
     return (
         '<aside class="colophon" aria-label="致读者">'
         '<div class="colo-k">致读者</div>'
-        '<p>这篇是时初白的评论，不是官方整理稿。它从公开报道里先搭一段骨架，等原片的合法链接补上，再按访谈本身重写。'
+        '<p>这篇是时初白依据公开访谈音频写的评论，不是官方授权文稿，也不是逐字稿。听不清的地方没有补成原话。'
         '这里没有广告。若你正想把书合上，希望这一页能把火递回来一点。</p>'
         '<div class="colo-actions">'
         '<button type="button" class="colo-link" data-share>分享这篇</button>'
@@ -666,7 +666,7 @@ def build_page(i, eps):
                 f'- 日期：{d}' if d else '', f'- 嘉宾：{guest}' if guest else '',
                 f'- 来源：{e.get("sourceLabel") or ""}', f'- 网页：{url}',
                 f'- 约 {zh_chars} 字（阅读约 {read_min} 分钟）', '',
-                '> 时初白精读的评论骨架，依据公开报道，非官方文稿。引用请链到网页版，并以上面的出处为准。', '']
+                '> 时初白精读的评论，依据公开访谈音频写成，非官方授权文稿。引用请链到网页版，并以上面的出处为准。', '']
         md.write_text('\n'.join(head) + '\n' + html_to_md(zh_raw))
     elif md.exists():
         md.unlink()
@@ -880,7 +880,7 @@ def build_feed(eps):
         zh_file = SITE / 'zh' / f'{slug}.html'
         body = ''
         if zh_file.exists():
-            body = zh_file.read_text() + f'<hr><p>评论骨架，非官方文稿。网页：<a href="{url}">{url}</a></p>'
+            body = zh_file.read_text() + f'<hr><p>非官方授权文稿，依据公开访谈音频。网页：<a href="{url}">{url}</a></p>'
         au = audio_for(next(e for e in master if e['slug'] == slug))
         # 页面播放用的访谈音频（含 audio-NNN Release）不写进 RSS enclosure，避免被当成官方播客。
         enc = (f'<enclosure url="{H.escape(au)}" type="audio/mpeg" length="0"/>'
