@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
-  <desc>第 001 期海报定稿记录。站点实际使用的是同目录 JPG。纸色 #F3ECE4，眉题 Noto Serif CJK SC Medium 26px #5E4838，间隔点 #A67A5A，主标题 SemiBold 76px #3D2822。锁定句式：三个「名字」 / 三幕人生。</desc>
+  <desc>第 001 期自制封面：纯文字排版，不含访谈画面、剧照或人物肖像。纸色 #F3ECE4，眉题 26px #5E4838，主标题 76px #3D2822。ViewBox 1280x720，与 og:image 声明一致。</desc>
   <rect width="1280" height="720" fill="#F3ECE4"/>
   <text x="640" y="150" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="26" fill="#5E4838">陈鲁豫 · 对谈 · 姜乘澜</text>
   <text x="640" y="340" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="76" font-weight="600" fill="#3D2822">三个「名字」</text>

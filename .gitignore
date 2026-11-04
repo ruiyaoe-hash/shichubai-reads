@@ -9,9 +9,17 @@ site/feed.xml
 site/404.html
 site/offline.html
 site/og/
+# 说明：site/index.html、site/robots.txt、site/site.webmanifest 也是生成物，
+# 但保留在仓库里便于直接预览。改版式请改 tools/index.template.html，改这几个文件请改 build.py。
 
-# 单集 mp3 只放在 GitHub Release（标签 audio-NNN），不要再提交进仓库
+# 合规红线：仓库与 Pages 都不允许出现访谈音视频文件
+*.mp3
+*.m4a
+*.mp4
+*.mov
+*.wav
 site/audio/
+site/video/
 
 # 运行时
 __pycache__/

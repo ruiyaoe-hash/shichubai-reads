@@ -3,12 +3,43 @@
     "num": 1,
     "title": "Three Names, Three Acts",
     "date": "2026-10-30",
+    "updated": "2026-11-04",
     "slug": "001-jiang-chenglan",
-    "sourceUrl": "https://www.youtube.com/watch?v=NPOOl6g9z6s",
-    "sourceLabel": "陈鲁豫的电影沙发 · 创作阶梯计划",
+    "sourceLabel": "抖音精选「创作阶梯计划」· 陈鲁豫对谈姜乘澜",
+    "sourceUrl": "https://www.douyin.com/search/%E5%A7%9C%E4%B9%98%E6%BE%9C",
+    "rightsHolder": "抖音精选「创作阶梯计划」、@陈鲁豫、@姜乘澜",
+    "rightsNotice": "嘉宾官方抖音主页标注「全网同名，只此一号，没有小号。暂未授权切片。」；本站未取得任何音视频的复制、传播或改编授权。",
+    "officialLinks": [
+      {
+        "label": "抖音精选 · 完整对谈（搜索「姜乘澜」）",
+        "url": "https://www.douyin.com/search/%E5%A7%9C%E4%B9%98%E6%BE%9C",
+        "kind": "primary",
+        "note": "权利人自行发布的完整对谈，2026-10-30 12:00 上线。网页端受限时请在抖音 App 内搜索「姜乘澜」（抖音号 JCLjiangchenglan）。"
+      },
+      {
+        "label": "创作阶梯计划 · 官方对谈预告与观看指引",
+        "url": "https://mp.weixin.qq.com/s?__biz=MzUxNTk5NjY4MQ==&mid=2247568636&idx=1&sn=861a6f7d6c446af0772a39ea8c1e1588",
+        "kind": "official",
+        "note": "主办方自行发布的公开页面，写明发布渠道与上线时间。"
+      },
+      {
+        "label": "创作阶梯计划 · 对谈内容官方通稿",
+        "url": "https://mp.weixin.qq.com/s?__biz=MzUxNTk5NjY4MQ==&mid=2247568927&idx=1&sn=40ecdfb883333504f822240f13425c35",
+        "kind": "official",
+        "note": "主办方发布的公开图文记录，含官方引语与出处。"
+      }
+    ],
     "ytId": null,
-    "cover": "/covers/001-jiang-chenglan.jpg",
+    "cover": "/covers/001-jiang-chenglan.svg",
     "reports": [
+      {
+        "label": "新浪新闻 · 陈鲁豫对话姜乘澜：关于失去与找回的三幕人生",
+        "url": "https://news.sina.com.cn/sx/2026-10-30/detail-iniwzazt8179508.shtml"
+      },
+      {
+        "label": "网易新闻 · 陈鲁豫对话姜乘澜：从程十安到姜乘澜",
+        "url": "https://m.163.com/news/article/LAGPGH1G00019UD6.html"
+      },
       {
         "label": "大皖新闻 · 那三年像幻觉，她改名姜乘澜",
         "url": "https://www.sina.cn/news/detail/5359775409505880.html"

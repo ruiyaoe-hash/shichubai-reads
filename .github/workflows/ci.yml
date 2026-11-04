@@ -1,0 +1,61 @@
+name: Build check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 同时守住项目页前缀与自定义域名根路径两种构建
+        mode: [project-page, domain-root]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build (project page)
+        if: matrix.mode == 'project-page'
+        run: python3 tools/build.py
+      - name: Build (custom domain root)
+        if: matrix.mode == 'domain-root'
+        run: SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
+      - name: Every episode has a generated page
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          eps = json.loads(pathlib.Path('tools/lex-master.json').read_text(encoding='utf-8'))
+          for e in eps:
+              page = pathlib.Path('site') / 'ep' / e['slug'] / 'index.html'
+              assert page.is_file(), 'missing page: ' + str(page)
+          print('pages ok:', len(eps))
+          PY
+      - name: No hosted media in the output
+        run: |
+          if grep -rInE '<audio|releases/download/audio-|\.mp3|<enclosure' site \
+               --include='*.html' --include='*.xml' --include='*.js' --include='*.txt'; then
+            echo "::error::site output contains hosted interview media"
+            exit 1
+          fi
+          echo "no hosted media"
+      - name: Build is idempotent
+        if: matrix.mode == 'project-page'
+        run: |
+          cp -a site /tmp/site-first
+          python3 tools/build.py >/dev/null
+          diff -rq /tmp/site-first site

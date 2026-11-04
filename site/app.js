@@ -219,7 +219,12 @@
     }
   }
 
-  const SUGGEST = ['姜乘澜', '鲁豫', '桃源', '改名'];
+  /* 搜索建议由已收录的嘉宾名生成，不写死某一期的人名。 */
+  function suggestChips() {
+    const guests = [...new Set(DATA.slice(0, 8).map((e) => e.guest).filter(Boolean))];
+    const words = (guests.length ? guests : ['嘉宾', '访谈']).slice(0, 4);
+    return words.map((s) => `<button type="button" class="chip" data-q="${esc(s)}">${esc(s)}</button>`).join('');
+  }
   function emptyHTML() {
     const q = state.q.trim();
     if (state.f === 'fav' && !q) {
@@ -232,7 +237,7 @@
         <p>可以换一个嘉宾、译名或话题。多个词之间用空格分开。</p>
         <div class="chips"><button type="button" class="chip" data-reset>在全部单集中搜索</button></div></div>`;
     }
-    const chips = SUGGEST.map((s) => `<button type="button" class="chip" data-q="${esc(s)}">${esc(s)}</button>`).join('');
+    const chips = suggestChips();
     const reset = state.f !== 'all' ? '<button type="button" class="chip" data-reset>在全部单集中搜索</button>' : '';
     return `<div class="empty"><h3>没有找到${q ? `「${esc(q)}」` : '符合条件的单集'}</h3>
       <p>试试嘉宾英文名、中文译名或话题关键词，多个词用空格分开。</p>
@@ -389,8 +394,16 @@
     syncSort();
     setFilter(state.f);
 
-    const res = await fetch(site('/data/episodes.json'));
-    DATA = (await res.json()).episodes;
+    let res;
+    try {
+      res = await fetch(site('/data/episodes.json'));
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      DATA = (await res.json()).episodes;
+    } catch (err) {
+      // 数据取不到时保留服务端注入的卡片：不重绘、不清空、不假装「没有结果」。
+      console.warn('episodes.json unavailable; keeping the server-rendered list', err);
+      return;
+    }
     DATA.forEach((e, i) => { e._i = i; indexEntry(e); });
     loadHist();
     loadFav();

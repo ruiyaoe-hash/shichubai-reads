@@ -704,3 +704,21 @@ button.colo-link { background: none; border: 0; cursor: pointer; padding: 0; }
 /* 单集页英文版顶部的中文精读入口 */
 .ep-also { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
 .ep-also a { color: var(--text); }
+
+
+/* ---- 官方来源外链卡片（替代原有的站内音频播放器） ---- */
+.source-links { max-width: 680px; margin: 34px auto 8px; }
+.sr-title { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+.sr-lead { font-family: var(--font-display); font-size: 15px; line-height: 1.85; color: var(--text-soft); margin: 0 0 18px; }
+.source-links a { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; align-items: center;
+  padding: 14px 18px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 2px;
+  text-decoration: none; color: var(--text); background: var(--bg2);
+  transition: border-color .2s ease, background .2s ease; }
+.source-links a:hover { border-color: var(--line-strong); background: var(--bg); }
+.source-links a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.src-label { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.src-note { grid-column: 1; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.src-go { grid-column: 2; grid-row: 1 / span 2; font-size: 18px; color: var(--muted); }
+.src-primary { border-left-width: 3px; }
+.disclaimer-body h2 { scroll-margin-top: 76px; }
+.disclaimer-updated { margin-top: 2.4em; font-size: 13px; color: var(--muted); }

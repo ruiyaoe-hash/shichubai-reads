@@ -2,7 +2,7 @@
    - 静态资源（样式 / 脚本 / 图标 / 字体）：先用缓存，后台更新
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页
-   BASE 取脚本所在目录，这样项目页 /shichubai-reads/ 与日后的域名根路径都能用。 */
+   BASE 取脚本所在目录，项目页子路径与域名根路径都能用。 */
 const VERSION = 'scb-v2';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
@@ -60,8 +60,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // 音频走浏览器自身的范围请求，不经 SW。GitHub Release 上以 .mp3 / .m4a 结尾的地址同样不拦截。
-  if (/\.(mp3|m4a)$/i.test(url.pathname)) return;
+  // 本站不托管任何音视频文件，也没有媒体直链需要拦截。
   const sameOrigin = url.origin === self.location.origin;
   if (req.mode === 'navigate' || (sameOrigin && /\.(json|md|xml|txt)$/.test(url.pathname))) {
     e.respondWith(networkFirst(req));
