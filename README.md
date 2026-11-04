@@ -1,10 +1,10 @@
-# 时初白精读
+# 初白de小岛
 
-按时间往下排的中文精读。白纸、墨字、一条细线。唯一的红色留给「中文精读」。
+按时间往下排的中文精读。暖纸白底、暖褐墨字、一道细线；陶土色是唯一强调色，只留给「中文精读」。
 
 > 在你想放弃时，把火递回来。
 
-不设话题分类，也不做情绪入口。首页就是检索、按时间排列的全部单集，以及中文精读。看过和收藏只在这台浏览器里有记录时才出现。一期一张卡片。
+只有一期时首页只呈现这一篇；检索、筛选与列表会在收录多期后自动出现。看过和收藏只记在这台浏览器里。
 
 站点：[https://ruiyaoe-hash.github.io/shichubai-reads/](https://ruiyaoe-hash.github.io/shichubai-reads/)
 
@@ -61,7 +61,7 @@ python3 -m http.server 8123 -d /tmp/gh-preview
 
 打开 [http://127.0.0.1:8123/shichubai-reads/](http://127.0.0.1:8123/shichubai-reads/)。Windows PowerShell 可用 `python -m http.server 8123 -d <目录>`，或直接在 `site/` 下起服务（此时相对链接按项目页前缀会失效，仅适合看样式）。
 
-封面默认黑白，鼠标移上去约半秒回到彩色并放大到 1.025。这是壳层原有的 `filter` 与 `transition`，不要拿掉。
+封面是本站自制的文字海报，日读 / 夜读各有一张同色系 SVG，按 `data-theme` 切换，不做灰度与放大。报头有一层极淡暖光，22 秒一次低幅度呼吸，`prefers-reduced-motion` 下静止。
 
 ### 自定义域名
 
@@ -112,5 +112,5 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 - 精读是评论，依据公开访谈与公开报道，不是官方文稿、不是逐字稿，可能有偏差；原话与事实以原访谈及权利人发布的内容为准。
 - 本站不保存、不嵌入、不分发任何访谈音视频；仓库、Pages、Release、RSS 都不含原片文件或文件直链。
 - 封面为本站自制的文字排版，不含节目画面、剧照或肖像。
-- 转载正文请署名「时初白精读」并链接到对应页面，且不得删改版权说明。
+- 转载正文请署名「初白de小岛」并链接到对应页面，且不得删改版权说明。
 - 权利人、嘉宾或其代理要求更正或下架：在[仓库开 Issue](https://github.com/ruiyaoe-hash/shichubai-reads/issues) 说明页面与理由，核实后更正、补出处或删页重建。

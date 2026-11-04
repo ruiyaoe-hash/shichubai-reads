@@ -1,7 +1,7 @@
 {
-  "name": "时初白精读",
-  "short_name": "时初白",
-  "description": "在你想放弃时，把火递回来。",
+  "name": "初白de小岛",
+  "short_name": "初白岛",
+  "description": "中文精读 · 按时间往下读",
   "lang": "zh-CN",
   "start_url": "/shichubai-reads/",
   "scope": "/shichubai-reads/",

@@ -1,102 +1,77 @@
 /* =========================================================
-   时初白精读 · 版式参考《纽约客》
-   壳层来自 joeseesun/lexfridman-cn（MIT，仅代码）。
-   纯白底 + 墨黑字，几乎不用颜色；靠衬线标题、细线分隔与留白建立层次。
-   唯一的颜色是一点深红，只出现在「中文精读」栏目标签上。
-   规则：不用竖条侧边装饰，强调靠字重、字号、底色与横向细线。
-   封面：默认黑白，悬停在数百毫秒内回到彩色并微微放大。见下方
-   .thumb img / .hero-media img 的 filter 与 transition，不要删。
+   初白de小岛 · 暖色版式
+   暖纸白底、暖褐墨字，陶土色是唯一强调色，只用于「中文精读」。
+   层级靠字号、字重与留白，不靠装饰线；封面与页面同色系，不做灰度叙事。
+   报头有一层极淡暖光，22 秒一次低幅度呼吸；减少动效偏好下静止。
    ========================================================= */
 :root {
-  --bg: #ffffff;
-  --bg2: #ffffff;
-  --card: #f5f5f3;
-  --card-hover: #efefec;
-  --line: #e4e4e1;
-  --line-strong: #c9c9c5;
-  --rule: #111111;
-  --text: #111111;
-  --text-soft: #2e2e2c;
-  --text-faint: #9b9b97;
-  --muted: #6b6b67;
-  --accent: #111111;
-  --accent-hover: #333333;
-  --on-accent: #ffffff;
-  --red: #b3261e;
-  --zh-soft: rgba(0,0,0,.045);
-  --bar-bg: #e6e6e3;
-  --bar-buf: #d2d2ce;
-  --bg-glass: rgba(255,255,255,.9);
-  --bg-glass2: rgba(255,255,255,.96);
-  --trans-bg: rgba(0,0,0,.028);
-  --thumb-bg: #ededea;
-  --mark-bg: rgba(255,214,10,.42);
-  --shadow: 0 14px 40px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.05);
-  --focus: #111111;
-  --read-size: 18px;
-  --read-lh: 2;
-  --measure: 680px;
-  --toc-w: 232px;
+  --bg: #FBF7F0;
+  --bg2: #F6F0E6;
+  --card: #F5EEE3;
+  --card-hover: #F0E7D9;
+  --line: #E8DED0;
+  --line-strong: #D6C7B4;
+  --rule: #B9A891;
+  --text: #3B3229;
+  --text-soft: #5E5346;
+  --text-faint: #B3A695;
+  --muted: #8B7E6E;
+  --accent: #A9684B;
+  --accent-hover: #8C553C;
+  --on-accent: #FFFDF9;
+  --clay: #A9684B;
+  --red: #A9684B;
+  --zh-soft: rgba(169,104,75,.055);
+  --bar-bg: #EDE3D5;
+  --bar-buf: #DFD2BF;
+  --bg-glass: rgba(251,247,240,.96);
+  --bg-glass2: rgba(251,247,240,.99);
+  --trans-bg: rgba(169,104,75,.035);
+  --thumb-bg: #F1E9DC;
+  --mark-bg: rgba(201,155,96,.28);
+  --shadow: 0 10px 30px rgba(84,62,40,.08);
+  --focus: #A9684B;
+  --glow: rgba(206,164,116,.22);
+  --read-size: 17px;
+  --read-lh: 1.9;
+  --measure: 660px;
+  --toc-w: 220px;
 }
-:root[data-theme='sepia'] {
-  --bg: #f5eddc;
-  --bg2: #f5eddc;
-  --card: #ede3cc;
-  --card-hover: #e8dcc2;
-  --line: #e0d3b6;
-  --line-strong: #c9b996;
-  --rule: #2f2618;
-  --text: #2f2618;
-  --text-soft: #443a2b;
-  --text-faint: #a8997f;
-  --muted: #7b6d57;
-  --accent: #2f2618;
-  --accent-hover: #4a3f2f;
-  --on-accent: #f5eddc;
-  --red: #9c2f1c;
-  --zh-soft: rgba(80,50,10,.06);
-  --bar-bg: #e4d8bf;
-  --bar-buf: #d4c5a6;
-  --bg-glass: rgba(245,237,220,.9);
-  --bg-glass2: rgba(250,244,230,.96);
-  --trans-bg: rgba(80,50,10,.04);
-  --thumb-bg: #e8dcc3;
-  --mark-bg: rgba(230,170,40,.35);
-  --shadow: 0 14px 40px rgba(60,40,10,.14), 0 2px 6px rgba(60,40,10,.06);
-  --focus: #2f2618;
-}
+
 :root[data-theme='dark'] {
-  --bg: #141414;
-  --bg2: #141414;
-  --card: #1e1e1e;
-  --card-hover: #242424;
-  --line: #2a2a2a;
-  --line-strong: #444444;
-  --rule: #e8e8e6;
-  --text: #ebebe8;
-  --text-soft: #cdcdc9;
-  --text-faint: #6c6c68;
-  --muted: #9a9a96;
-  --accent: #ebebe8;
-  --accent-hover: #ffffff;
-  --on-accent: #141414;
-  --red: #e2675b;
-  --zh-soft: rgba(255,255,255,.06);
-  --bar-bg: #2e2e2e;
-  --bar-buf: #3c3c3c;
-  --bg-glass: rgba(20,20,20,.88);
-  --bg-glass2: rgba(30,30,30,.95);
-  --trans-bg: rgba(255,255,255,.035);
-  --thumb-bg: #222222;
-  --mark-bg: rgba(255,214,10,.28);
-  --shadow: 0 14px 40px rgba(0,0,0,.55);
-  --focus: #ebebe8;
+  --bg: #24201B;
+  --bg2: #2C261F;
+  --card: #302A23;
+  --card-hover: #382F27;
+  --line: #3C342B;
+  --line-strong: #554A3D;
+  --rule: #6B5D4C;
+  --text: #EFE6D8;
+  --text-soft: #D6C9B7;
+  --text-faint: #7C7061;
+  --muted: #A89A87;
+  --accent: #D79B78;
+  --accent-hover: #E8B392;
+  --on-accent: #24201B;
+  --clay: #D79B78;
+  --red: #D79B78;
+  --zh-soft: rgba(215,155,120,.08);
+  --bar-bg: #3C342B;
+  --bar-buf: #4A4034;
+  --bg-glass: rgba(36,32,27,.96);
+  --bg-glass2: rgba(36,32,27,.99);
+  --trans-bg: rgba(215,155,120,.05);
+  --thumb-bg: #332C24;
+  --mark-bg: rgba(215,155,120,.25);
+  --shadow: 0 10px 30px rgba(0,0,0,.28);
+  --focus: #D79B78;
+  --glow: rgba(215,155,120,.10);
 }
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
-  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif CJK SC", serif;
-  /* 标题：西文 Libre Caslon（纽约客正文同源的 Caslon），中文思源宋体 */
-  --font-display: "Libre Caslon Text", "Noto Serif SC", "Songti SC", "Source Han Serif SC", "STSong", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", serif;
+  --font-display: "Noto Serif SC", "Songti SC", "Source Han Serif SC", Georgia, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { color-scheme: light; -webkit-text-size-adjust: 100%; }
@@ -722,3 +697,114 @@ button.colo-link { background: none; border: 0; cursor: pointer; padding: 0; }
 .src-primary { border-left-width: 3px; }
 .disclaimer-body h2 { scroll-margin-top: 76px; }
 .disclaimer-updated { margin-top: 2.4em; font-size: 13px; color: var(--muted); }
+
+/* =========================================================
+   暖色改版层：层级、统一间距刻度、含蓄反馈、减法
+   ========================================================= */
+html { background: linear-gradient(180deg, #FDF9F3 0%, var(--bg) 34%, var(--bg) 100%); }
+html[data-theme='dark'] { background: var(--bg); }
+body { background: transparent; }
+[hidden] { display: none !important; }
+
+/* 报头暖光：只一层极淡光晕，22s 低幅度呼吸 */
+.masthead { position: relative; isolation: isolate; }
+.masthead::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -48px; height: 320px;
+  z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 62% 64% at 50% 0%, var(--glow), transparent 72%);
+  animation: breathe 22s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { opacity: .5; } 50% { opacity: .9; } }
+
+/* 站名与「de」混排 */
+.mast-title { font-size: clamp(30px, 4.2vw, 46px); line-height: 1.16; letter-spacing: .01em; }
+.brand-de { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: .52em; font-weight: 400; color: var(--clay); margin: 0 .1em; letter-spacing: 0; opacity: .88; }
+.mast-sub { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; letter-spacing: .08em; }
+.mast-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--line-strong); }
+
+/* 「时初白」IP 印章：体量小而精致，hover 含蓄反馈 + 点击到说明页 */
+.ip-seal { position: relative; display: inline-flex; align-items: center; font: 400 11px/1 var(--font-ui); letter-spacing: .1em; color: var(--muted); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 10px; transition: color .25s ease, border-color .25s ease, background .25s ease, transform .25s ease; }
+.ip-seal:hover, .ip-seal:focus-visible { color: var(--clay); border-color: var(--clay); background: var(--zh-soft); transform: translateY(-1px); }
+.ip-seal::after { content: attr(data-tip); position: absolute; left: 50%; top: calc(100% + 9px); transform: translate(-50%, -3px); white-space: nowrap; font: 400 11px/1.5 var(--font-ui); letter-spacing: 0; color: var(--bg); background: var(--text); padding: 5px 10px; border-radius: 4px; opacity: 0; visibility: hidden; pointer-events: none; box-shadow: var(--shadow); transition: opacity .22s ease, transform .22s ease; }
+.ip-seal:hover::after, .ip-seal:focus-visible::after { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+/* 去玻璃拟态，改为暖色实底 + 细线 */
+.toolbar, .tabs { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+
+/* 统一 8px 间距刻度与字号层级 */
+.toolbar-inner { gap: 16px; }
+.filters { gap: 16px; }
+.hero { gap: 40px; padding: 40px 0 48px; }
+.hero-title { font-size: clamp(23px, 2.5vw, 31px); }
+.hero-desc { font-size: 16px; line-height: 1.85; }
+.hero-kicker { color: var(--muted); letter-spacing: .14em; }
+.result-line { padding: 32px 0 8px; }
+.result-line h2 { font-size: 20px; }
+.grid { gap: 32px 24px; padding: 24px 0 32px; }
+.card-title { font-size: 16.5px; }
+.card-body { gap: 8px; padding-top: 12px; }
+.ep-title { font-size: clamp(27px, 3.4vw, 38px); }
+.ep-dek { font-size: 17px; line-height: 1.8; }
+.ep-resources { margin-top: 48px; padding-top: 16px; }
+.ep-prevnext { margin: 40px 0 48px; gap: 24px; }
+.ft-cols { gap: 32px; padding: 32px 0 40px; }
+
+/* 封面回到同色系，去掉灰度与放大叙事 */
+.grid .thumb img, .cont-thumb img, .hero-media img { filter: none; }
+.card:hover .thumb img, .hero:hover .hero-media img, .cont-item:hover .cont-thumb img { transform: none; }
+.card:hover .thumb img { opacity: .9; }
+.thumb img { transition: opacity .3s ease; }
+
+/* 单集页：官方入口只占一行，正文留在首屏 */
+.ep-source { display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 24px 0 0; }
+.ep-source a { font: 500 13px/1.5 var(--font-ui); color: var(--clay); text-decoration: none; border-bottom: 1px solid var(--line-strong); padding-bottom: 2px; transition: border-color .2s ease; }
+.ep-source a:hover { border-color: var(--clay); }
+.ep-source-note { font: 400 11.5px/1.5 var(--font-ui); color: var(--text-faint); }
+.res-h { font: 500 11.5px/1.5 var(--font-ui); letter-spacing: .14em; color: var(--muted); margin-bottom: 14px; }
+.res-note { margin-top: 18px; font-size: 12px; line-height: 1.8; color: var(--muted); }
+.res-note a { color: var(--clay); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+
+/* 页脚回到同色系，品牌名不再喧宾夺主 */
+.site-footer { --f-bg: var(--bg2); --f-text: var(--text); --f-soft: var(--text-soft); --f-faint: var(--muted); --f-line: var(--line); background: var(--f-bg); color: var(--f-text); }
+html[data-theme='dark'] .site-footer { --f-bg: var(--bg2); --f-text: var(--text); --f-soft: var(--text-soft); --f-faint: var(--muted); --f-line: var(--line); }
+.ft-mark { font-size: 21px; }
+.ft-tag { font: 400 13px/1.6 var(--font-ui); color: var(--muted); }
+.ft-h { font: 500 11px/1.5 var(--font-ui); letter-spacing: .14em; color: var(--muted); margin-bottom: 6px; }
+.ft-bottom { font-size: 11.5px; line-height: 1.8; }
+
+/* 收藏：从主按钮降为轻量文字按钮 */
+.fav-btn { background: transparent; border: 1px solid var(--line-strong); color: var(--muted); font: 400 12px/1 var(--font-ui); padding: 7px 14px; border-radius: 999px; transition: color .25s ease, border-color .25s ease, background .25s ease; }
+.fav-btn[aria-pressed='true'] { color: var(--clay); border-color: var(--clay); background: var(--zh-soft); }
+
+/* 去掉与简约主张冲突的排版装饰 */
+html:not(.indent) .zh-article p.dropcap::first-letter,
+.zh-article p.dropcap::first-letter { float: none; font-size: inherit; line-height: inherit; font-weight: inherit; margin: 0; padding: 0; }
+.zh-article em { text-emphasis: none; -webkit-text-emphasis: none; font-style: italic; }
+.zh-article hr::before { content: ''; }
+.zh-article .end-mark::after { display: none; }
+
+/* 窄屏与 hero 保持同一方向 */
+@media (max-width: 640px) {
+  .card { flex-direction: column; }
+  .card .thumb { width: 100%; }
+  .mast-title { font-size: 30px; }
+  .mast-sub { font-size: 11.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .masthead::before { animation: none; opacity: .7; }
+}
+
+/* 吸顶与弹层同样去掉玻璃拟态，保持暖色实底 */
+.ar-nav, .pop { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+
+/* 报头改为一道细线，去掉壳层的报纸式双线 */
+.masthead .wrap::after { height: 0; margin-top: 24px; border-top: 1px solid var(--line-strong); border-bottom: 0; }
+
+/* 封面按主题切换两张自制 SVG，避免夜读态出现亮板 */
+.thumb img.cv-dark, .hero-media img.cv-dark, .cont-thumb img.cv-dark { display: none; }
+html[data-theme='dark'] .thumb img.cv-light,
+html[data-theme='dark'] .hero-media img.cv-light,
+html[data-theme='dark'] .cont-thumb img.cv-light { display: none; }
+html[data-theme='dark'] .thumb img.cv-dark,
+html[data-theme='dark'] .hero-media img.cv-dark,
+html[data-theme='dark'] .cont-thumb img.cv-dark { display: block; }

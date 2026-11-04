@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <desc>第 001 期自制封面：纯文字排版，不含访谈画面、剧照或人物肖像。夜读版：暖褐底 #302A23，眉题 #A89A87，主标题 #EFE6D8。ViewBox 1280x720，与 og:image 声明一致。</desc>
+  <rect width="1280" height="720" fill="#302A23"/>
+  <text x="640" y="150" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="26" fill="#A89A87">陈鲁豫 · 对谈 · 姜乘澜</text>
+  <text x="640" y="340" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="76" font-weight="600" fill="#EFE6D8">三个「名字」</text>
+  <text x="640" y="450" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="76" font-weight="600" fill="#EFE6D8">三幕人生</text>
+</svg>

@@ -1,4 +1,4 @@
-/* 时初白精读 · 首页列表：搜索 / 筛选 / 排序 / 继续阅读 */
+/* 初白de小岛 · 首页列表：搜索 / 筛选 / 排序 / 继续阅读 */
 (function () {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -15,7 +15,8 @@
     if (e.cv) {
       const lazy = kind === 'hero' ? '' : ' loading="lazy" decoding="async"';
       const dims = kind === 'card' ? ' width="320" height="180"' : '';
-      return `<img${lazy} src="${site(e.cv)}" alt=""${dims}>`;
+      const light = site(e.cv), dark = site(e.cv.replace('.svg', '-dark.svg'));
+      return `<img class="cv-light"${lazy} src="${light}" alt=""${dims}><img class="cv-dark"${lazy} src="${dark}" alt=""${dims}>`;
     }
     if (kind === 'card') {
       const label = e.n != null ? String(e.n).padStart(3, '0') : '时';
@@ -257,12 +258,7 @@
       const t = new Date();
       md.textContent = `${t.getFullYear()} 年 ${t.getMonth() + 1} 月 ${t.getDate()} 日 · 星期${'日一二三四五六'[t.getDay()]}`;
     }
-    const ms = $('#mastSub');
-    if (ms) {
-      const nZh = DATA.filter((x) => x.r).length;
-      const since = DATA.map((x) => x.d).filter(Boolean).sort()[0];
-      ms.textContent = `${DATA.length} 期深度阅读 · ${nZh} 篇中文精读${since ? ` · ${since.slice(0, 4)} 年至今` : ''}`;
-    }
+    // 副标题与「时初白」印章由模板固定，不在运行时覆盖。
   }
 
   /* ---------- 头条：最新一篇中文精读 ---------- */
@@ -330,7 +326,17 @@
         <div class="cont-body"><div class="cont-title">${esc(e._zh)}</div><div class="cont-meta">${meta}</div></div></a>`;
     }).join('');
   }
+  let clearArmed = false;
   function clearHist() {
+    const btn = $('#contClear');
+    if (!clearArmed) {
+      clearArmed = true;
+      if (btn) btn.textContent = '再点一次确认';
+      setTimeout(() => { clearArmed = false; if (btn) btn.textContent = '清除记录'; }, 4000);
+      return;
+    }
+    clearArmed = false;
+    if (btn) btn.textContent = '清除记录';
     Object.keys(HIST).forEach((s) => ls.del('lex-pos-' + s));
     ls.del('lex-hist');
     HIST = {};
@@ -405,10 +411,19 @@
       return;
     }
     DATA.forEach((e, i) => { e._i = i; indexEntry(e); });
+    renderMast();
+    // 只有一期时收起检索与列表，保留服务端渲染的一篇精读，避免首屏重复。
+    if (DATA.length <= 1) {
+      const bar = document.querySelector('.toolbar');
+      if (bar) bar.hidden = true;
+      if ($('#resultLine')) $('#resultLine').hidden = true;
+      if ($('#sentinel')) $('#sentinel').hidden = true;
+      if (grid) grid.hidden = true;
+      return;
+    }
     loadHist();
     loadFav();
     updateCounts();
-    renderMast();
     $('#contClear').addEventListener('click', clearHist);
 
     let deb;

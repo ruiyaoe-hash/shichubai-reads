@@ -1,4 +1,4 @@
-/* 时初白精读 · 单集页：tab 切换 / 阅读设置 / 目录 / 视频懒加载 / 音频播放器 */
+/* 初白de小岛 · 单集页：tab 切换 / 阅读设置 / 目录 / 视频懒加载 / 音频播放器 */
 (function () {
   'use strict';
   const $ = (s, r) => (r || document).querySelector(s);
@@ -130,14 +130,11 @@
   const LH = [['1.75', '紧凑'], ['2', '适中'], ['2.25', '宽松']];
   const MEASURE = [['600', '窄'], ['680', '标准'], ['760', '宽']];
   const FONTS = [
-    ['sys', '系统默认', '苹方 / 雅黑', ''],
-    ['sans', '思源黑体', 'Noto Sans SC', '"Noto Sans SC"'],
-    ['serif', '思源宋体', 'Noto Serif SC', '"Noto Serif SC"'],
-    ['song', '京華老宋', 'KingHwa OldSong', '"KingHwa_OldSong"'],
-    ['kai', '霞鹜文楷', 'LXGW WenKai', '"LXGW WenKai Screen"'],
-    ['wei', '站酷小薇', 'ZCOOL XiaoWei', '"ZCOOL XiaoWei"'],
+    ['sys', '系统', '苹方 / 雅黑', ''],
+    ['serif', '暖宋', 'Noto Serif SC', '"Noto Serif SC"'],
+    ['sans', '暖黑', 'Noto Sans SC', '"Noto Sans SC"'],
   ];
-  const THEMES = [['light', '浅色', '#ffffff', '#111111'], ['sepia', '护眼', '#f5eddc', '#2f2618'], ['dark', '深色', '#141414', '#ebebe8']];
+  const THEMES = [['light', '日读', '#FBF7F0', '#3B3229'], ['dark', '夜读', '#24201B', '#EFE6D8']];
   const st = {
     size: parseInt(css('--read-size'), 10) || SIZE.def,
     lh: css('--read-lh') || '2',
@@ -272,7 +269,7 @@
       closePops(p);
       p.hidden = !open;
       b.setAttribute('aria-expanded', String(open));
-      if (open && p === aaPop) FONTS.forEach(([k]) => window.__lexLoadFont && window.__lexLoadFont(k)); // 预览字体名
+      // 字体按需加载，不在打开面板时一次性预取。
       if (open && p === tocPop) { const on = $('a.on', p); if (on) p.scrollTop = on.offsetTop - p.clientHeight / 3; }
     }));
     document.addEventListener('click', (e) => { if (!e.target.closest('.pop')) closePops(); });
@@ -363,7 +360,7 @@
     if (!facade || !facade.isConnected) return;
     const f = document.createElement('iframe');
     f.src = `https://www.youtube.com/embed/${facade.dataset.yt}?autoplay=1&rel=0&origin=${encodeURIComponent(location.origin)}`;
-    f.title = ($('.ep-title') || {}).textContent || '时初白精读';
+    f.title = ($('.ep-title') || {}).textContent || '初白de小岛';
     f.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
     f.allowFullscreen = true;
     const media = facade.closest('.media');

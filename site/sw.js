@@ -1,9 +1,9 @@
-/* 时初白精读 · Service Worker
+/* 初白de小岛 · Service Worker
    - 静态资源（样式 / 脚本 / 图标 / 字体）：先用缓存，后台更新
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页
    BASE 取脚本所在目录，项目页子路径与域名根路径都能用。 */
-const VERSION = 'scb-v2';
+const VERSION = 'scb-v3';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;

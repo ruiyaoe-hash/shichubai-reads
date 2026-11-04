@@ -56,8 +56,10 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 2, 2, 2
-SITE_NAME = '时初白精读'
+CSS_V, APP_V, EP_V = 3, 3, 3
+SITE_NAME = '初白de小岛'
+SITE_SUB = '中文精读 · 按时间往下读'
+IP_NAME = '时初白'
 TAGLINE = '在你想放弃时，把火递回来。'
 
 
@@ -75,7 +77,7 @@ def absu(path):
 
 
 THEME_BTN = (
-    '<button class="theme-toggle" type="button" data-theme-toggle aria-label="切换浅色 / 深色模式" title="切换浅色 / 深色模式">'
+    '<button class="theme-toggle" type="button" data-theme-toggle aria-label="切换日读 / 夜读" title="切换日读 / 夜读">'
     '<svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/>'
     '<path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>'
     '<svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>'
@@ -89,24 +91,21 @@ THEME_SCRIPT = """<script>
 (function () {
   var d = document.documentElement, g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var t = g('lex-theme'), f = g('lex-font'), z = g('lex-size'), lh = g('lex-lh'), w = g('lex-measure');
-  var BG = { light: '#ffffff', sepia: '#f5eddc', dark: '#141414' };
-  if (!BG[t]) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  var BG = { light: '#FBF7F0', sepia: '#FBF7F0', dark: '#24201B' };
+  // 暖纸白是默认外观；夜读由读者主动选择，不跟随系统深色偏好。
+  if (t !== 'light' && t !== 'dark') t = 'light';
   d.setAttribute('data-theme', t);
-  var FONTS = {
-    sans: 'https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;600&display=swap',
-    serif: 'https://fonts.googleapis.cn/css2?family=Noto+Serif+SC:wght@400;600&display=swap',
-    kai: 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaiscreen.css',
-    wei: 'https://fonts.googleapis.cn/css2?family=ZCOOL+XiaoWei&display=swap',
-    song: 'https://cdn.jsdelivr.net/npm/@chinese-fonts/jhlst@3.0.0/dist/%E4%BA%AC%E8%8F%AF%E8%80%81%E5%AE%8B%E4%BD%93v2_002/result.css'
-  };
+  // 只保留两款字体，思源宋体已在 head 加载，这里按需补黑体。
+  var FONTS = { sans: 'https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;600&display=swap' };
   window.__lexFonts = FONTS;
   window.__lexLoadFont = function (k) {
     if (!FONTS[k] || document.getElementById('lexfont-' + k)) return;
     var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = FONTS[k]; l.id = 'lexfont-' + k;
     document.head.appendChild(l);
   };
-  if (!f) f = 'serif';
-  if (FONTS[f]) { d.setAttribute('data-font', f); window.__lexLoadFont(f); }
+  if (f !== 'serif' && f !== 'sans' && f !== 'sys') f = 'serif';
+  d.setAttribute('data-font', f);
+  if (FONTS[f]) window.__lexLoadFont(f);
   if (z && /^(1[5-9]|2[0-2])$/.test(z)) d.style.setProperty('--read-size', z + 'px');
   if (lh && /^(1\\.\\d+|2(\\.\\d+)?)$/.test(lh)) d.style.setProperty('--read-lh', lh);
   if (w && /^\\d{3}$/.test(w)) d.style.setProperty('--measure', w + 'px');
@@ -114,16 +113,16 @@ THEME_SCRIPT = """<script>
   function syncMeta() { if (meta) meta.content = BG[t]; }
   syncMeta();
   window.__lexSetTheme = function (n) {
-    if (!BG[n]) return;
+    if (n !== 'light' && n !== 'dark') return;
     t = n;
-    try { localStorage.setItem('lex-theme', t); if (t !== 'dark') localStorage.setItem('lex-light', t); } catch (e) {}
+    try { localStorage.setItem('lex-theme', t); } catch (e) {}
     d.classList.add('theme-anim');
     d.setAttribute('data-theme', t);
     syncMeta();
     setTimeout(function () { d.classList.remove('theme-anim'); }, 320);
     document.dispatchEvent(new CustomEvent('lex-theme', { detail: t }));
   };
-  window.__lexThemeToggle = function () { window.__lexSetTheme(t === 'dark' ? (g('lex-light') || 'light') : 'dark'); };
+  window.__lexThemeToggle = function () { window.__lexSetTheme(t === 'dark' ? 'light' : 'dark'); };
   (function () {
     var vv = window.visualViewport;
     if (!vv) return;
@@ -142,10 +141,6 @@ THEME_SCRIPT = """<script>
   document.addEventListener('click', function (e) {
     var el = e.target.closest ? e.target : e.target.parentNode;
     if (el.closest('[data-theme-toggle]')) return window.__lexThemeToggle();
-    var o = el.closest('[data-open]');
-    if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } return; }
-    var mm = el.closest('.modal');
-    if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -167,17 +162,6 @@ THEME_SCRIPT = """<script>
   });
   document.addEventListener('load', function (e) { var im = e.target; if (im.tagName === 'IMG') im.classList.add('ok'); }, true);
   document.addEventListener('error', function (e) { var im = e.target; if (im.tagName === 'IMG' && !im.getAttribute('onerror')) im.classList.add('ok'); }, true);
-  var deferred = null;
-  function showInstall() { Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = false; }); }
-  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; showInstall(); });
-  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone) document.addEventListener('DOMContentLoaded', showInstall);
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest && e.target.closest('[data-install]');
-    if (!b) return;
-    if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
-    else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
-  });
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', function () {
       var base = d.getAttribute('data-base') || '';
@@ -192,13 +176,12 @@ def head_extra():
     return (
         '<link rel="preconnect" href="https://fonts.googleapis.cn">'
         '<link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin>'
-        '<link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400'
-        '&family=Noto+Serif+SC:wght@500;700&display=swap">\n'
+        '<link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap">\n'
         f'<link rel="icon" href="{sp("/favicon.ico")}" sizes="32x32">'
         f'<link rel="icon" href="{sp("/icon.svg")}" type="image/svg+xml">'
         f'<link rel="apple-touch-icon" href="{sp("/apple-touch-icon.png")}">'
         f'<link rel="manifest" href="{sp("/site.webmanifest")}">\n'
-        '<meta name="apple-mobile-web-app-title" content="时初白">'
+        f'<meta name="apple-mobile-web-app-title" content="{SITE_NAME}">'
         '<meta name="apple-mobile-web-app-capable" content="yes">'
         '<meta name="mobile-web-app-capable" content="yes">'
         '<meta name="apple-mobile-web-app-status-bar-style" content="default">'
@@ -216,8 +199,8 @@ def site_header():
     return (
         '<header class="site-header slim">\n  <div class="wrap header-inner">\n'
         f'    <a class="hdr-back" href="{home}">← 全部单集</a>\n'
-        f'    <a class="wordmark" href="{home}" aria-label="{SITE_NAME} · 首页">时初白 <span>精读</span></a>\n'
-        f'    <div class="header-actions"><a class="hdr-icon" href="{home}#search" aria-label="搜索全部单集" title="搜索">{ICON_SEARCH}</a>{THEME_BTN}</div>\n'
+        f'    <a class="wordmark" href="{home}" aria-label="{SITE_NAME} · 首页">初白<span class="brand-de">de</span>小岛</a>\n'
+        f'    <div class="header-actions">{THEME_BTN}</div>\n'
         '  </div>\n</header>'
     )
 
@@ -227,50 +210,28 @@ def site_footer():
     return f"""<footer class="site-footer">
   <div class="wrap">
     <div class="ft-top">
-      <a class="ft-mark" href="{home}">时初白 <span>精读</span></a>
+      <a class="ft-mark" href="{home}">初白<span class="brand-de">de</span>小岛</a>
       <p class="ft-tag">{TAGLINE}</p>
     </div>
     <div class="ft-cols">
-      <nav class="ft-col" aria-label="浏览"><h2>浏览</h2>
-        <a href="{home}">全部单集</a><a href="{home}?f=zh">中文精读</a><a href="{sp('/archive/')}">单集目录</a><a href="{home}#search">搜索</a>
-        <button type="button" data-install hidden>安装为应用</button></nav>
-      <nav class="ft-col" aria-label="订阅"><h2>订阅</h2>
-        <a href="{sp('/feed.xml')}">RSS 全文订阅</a><button type="button" data-copy-feed>复制 RSS 地址</button></nav>
-      <nav class="ft-col" aria-label="关于"><h2>关于</h2>
-        <a href="{sp('/disclaimer/')}">版权与说明</a>
-        <a href="https://github.com/ruiyaoe-hash/shichubai-reads" target="_blank" rel="noopener">本站代码</a>
-        <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener">壳层来源（MIT）</a>
-        <a href="{sp('/llms.txt')}">llms.txt</a></nav>
-      <div class="ft-col ft-support"><h2>读法</h2>
-        <p>白纸、墨字、一条细线。没有话题分类，只有按时间排下去的精读。火不用很大，能递回来就好。</p></div>
+      <nav class="ft-col" aria-label="浏览"><div class="ft-h">浏览</div>
+        <a href="{home}">全部单集</a><a href="{sp('/archive/')}">单集目录</a></nav>
+      <nav class="ft-col" aria-label="订阅"><div class="ft-h">订阅</div>
+        <a href="{sp('/feed.xml')}">RSS 订阅</a></nav>
+      <nav class="ft-col" aria-label="关于"><div class="ft-h">关于</div>
+        <a href="{sp('/disclaimer/')}">版权与说明</a></nav>
     </div>
     <div class="ft-bottom">
-      <span>© 2026 时初白精读 · 非官方评论站点</span>
-      <span>非官方评论站点。不保存、不嵌入、不分发任何访谈音视频；完整对谈请到各期列出的官方渠道观看。中文精读是依据公开访谈与报道写的评论，不是官方文稿，表述以原访谈为准。</span>
+      <span>© 2026 {SITE_NAME} · {IP_NAME}</span>
+      <span>本站不托管访谈音视频；精读是依据公开材料写的评论，完整对谈请以各期官方渠道为准。</span>
     </div>
   </div>
-</footer>
-<div id="installModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="installT">
-  <div class="modal-card">
-    <button type="button" class="modal-close" aria-label="关闭">×</button>
-    <h3 id="installT">添加到主屏幕</h3>
-    <p class="modal-sub">像读一本杂志一样打开。读过的文章可以离线再看。</p>
-    <ol class="install-steps"><li>点 Safari 底部的「分享」按钮 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></li><li>向下滑，选择「添加到主屏幕」</li><li>点右上角「添加」</li></ol>
-  </div>
-</div>"""
+</footer>"""
 
 
 def colophon():
-    return (
-        '<aside class="colophon" aria-label="致读者">'
-        '<div class="colo-k">致读者</div>'
-        '<p>这篇是时初白依据公开访谈及主办方公开报道写的评论，不是官方授权文稿，也不是逐字稿。'
-        '这里没有广告。若你正想把书合上，希望这一页能把火递回来一点。</p>'
-        '<div class="colo-actions">'
-        '<button type="button" class="colo-link" data-share>分享这篇</button>'
-        f'<a class="colo-link" href="{sp("/feed.xml")}">RSS 订阅</a>'
-        f'<a class="colo-link" href="{sp("/disclaimer/")}">说明</a></div></aside>'
-    )
+    """改版后不再在正文末尾放抒情块，动作入口统一收进页脚。"""
+    return ''
 
 
 EP_SHELL = """<!DOCTYPE html>
@@ -279,7 +240,7 @@ EP_SHELL = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#FBF7F0">
 <title>{title_tag}</title>
 <meta name="description" content="{desc}">
 <link rel="canonical" href="{url}">
@@ -461,10 +422,15 @@ def thumb_img(x, hero=False):
         return (f'<img loading="lazy" decoding="async" src="https://i.ytimg.com/vi/{y}/mqdefault.jpg" '
                 f'alt="" width="320" height="180">')
     if x.get('cv'):
-        src = H.escape(sp(x['cv']))
-        if hero:
-            return f'<img src="{src}" alt="">'
-        return f'<img loading="lazy" decoding="async" src="{src}" alt="" width="320" height="180">'
+        light = H.escape(sp(x['cv']))
+        dark_path = x['cv'].replace('.svg', '-dark.svg')
+        # 没有夜读版时退回日读版，至少不会缺图。
+        dark_src = dark_path if (SITE / dark_path.lstrip('/')).exists() else x['cv']
+        dark = H.escape(sp(dark_src))
+        lazy = '' if hero else ' loading="lazy" decoding="async"'
+        dims = '' if hero else ' width="320" height="180"'
+        return (f'<img class="cv-light"{lazy} src="{light}" alt=""{dims}>'
+                f'<img class="cv-dark"{lazy} src="{dark}" alt=""{dims}>')
     if hero:
         return ''
     label = f'{x["n"]:03d}' if isinstance(x.get('n'), int) else '时'
@@ -538,24 +504,14 @@ def build_page(i, eps):
         by.append(f'<span>精读约 {wan} · 阅读 {read_min} 分钟</span>')
     byline = '<span class="k-sep">·</span>'.join(by)
 
-    if links:
-        cards = []
-        for lk in links:
-            cls = 'src-primary' if lk['kind'] == 'primary' else 'src-item'
-            note = f'<span class="src-note">{H.escape(lk["note"])}</span>' if lk['note'] else ''
-            cards.append(
-                f'<a class="{cls}" href="{H.escape(lk["url"])}" target="_blank" rel="noopener noreferrer">'
-                f'<span class="src-label">{H.escape(lk["label"])}</span>{note}'
-                f'<span class="src-go" aria-hidden="true">↗</span></a>')
+    primary = next((lk for lk in links if lk['kind'] == 'primary'), links[0] if links else None)
+    if primary:
         media_html = (
-            '<section class="source-links" aria-label="官方来源">'
-            '<h2 class="sr-title">去官方渠道看完整对谈</h2>'
-            '<p class="sr-lead">本站不保存、不嵌入、不分发任何访谈音视频。'
-            '以下是权利人自行发布的页面，点开后在原平台观看。</p>'
-            + ''.join(cards) + '</section>')
+            '<p class="ep-source"><a href="' + H.escape(primary['url']) + '" '
+            'target="_blank" rel="noopener noreferrer">去官方看完整对谈 <span aria-hidden="true">↗</span></a>'
+            '<span class="ep-source-note">原片在发布方平台，本站不托管</span></p>')
     else:
-        media_html = ('<div class="ep-notice">这一期还没有核实过的官方来源链接，'
-                      '因此本页不嵌入、不链接任何音视频。</div>')
+        media_html = ''
 
     tabs = ['<div class="tabs" role="tablist">']
     if has_zh:
@@ -568,9 +524,7 @@ def build_page(i, eps):
     if has_zh:
         panel_zh = (
             f'<div class="tab-panel" id="panel-zh" data-panel="zh">'
-            f'<div class="zh-note">中文精读是本站依据公开访谈与报道写的评论，不是官方文稿，也不是逐字翻译，可能有偏差或遗漏。'
-            f'表述以原访谈为准。<a href="{sp("/disclaimer/")}">说明</a></div>'
-            f'<div class="zh-article">{zh_raw}</div>{colophon()}</div>')
+            f'<div class="zh-article">{zh_raw}</div></div>')
     panel_tr = ''
     if tr_tag:
         panel_tr = (f'<div class="tab-panel" id="panel-tr" data-panel="tr">'
@@ -578,27 +532,20 @@ def build_page(i, eps):
                     f'<div class="transcript-text">{H.escape(tr_text)}</div></div>')
     no_tr_note = '' if (has_zh or tr_tag) else '<div class="ep-notice">这篇还没有正文。</div>'
 
-    res = ['<section class="ep-resources"><h2>本集资源与出处</h2><ul>']
+    res = ['<section class="ep-resources"><div class="res-h">本集资源与出处</div><ul>']
     res.append(f'<li><span class="res-k">嘉宾</span>{H.escape(guest or "—")}</li>')
-    res.append(f'<li><span class="res-k">权利人</span>{H.escape(e.get("rightsHolder") or "未标注")}'
-               f'<span class="res-sub">{H.escape(e.get("rightsNotice") or "")}</span></li>')
     res.append(f'<li><span class="res-k">来源</span>{H.escape(e.get("sourceLabel") or "公开访谈")}'
-               f'<span class="res-sub">发布日 {H.escape(d) or "待核"}；以权利人发布的信息为准</span></li>')
+               f'<span class="res-sub">发布日 {H.escape(d) or "待核"}</span></li>')
     if e.get('sourceUrl'):
-        res.append(f'<li><span class="res-k">原片</span><a href="{H.escape(e["sourceUrl"])}" target="_blank" rel="noopener noreferrer">官方发布渠道</a>'
-                   f'<span class="res-sub">平台检索入口；内容由权利人自行发布，本站不托管文件</span></li>')
+        res.append(f'<li><span class="res-k">原片</span><a href="{H.escape(e["sourceUrl"])}" target="_blank" rel="noopener noreferrer">官方发布渠道</a></li>')
     for lk in links:
         if lk['kind'] != 'primary':
-            res.append(f'<li><span class="res-k">官方</span><a href="{H.escape(lk["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(lk["label"])}</a>'
-                       f'<span class="res-sub">权利人自行发布的公开页面</span></li>')
-    res.append('<li><span class="res-k">音视频</span>本站不托管、不嵌入、不提供任何音频或视频文件；'
-               '完整内容仅通过上方官方外链访问。'
-               '<span class="res-sub">权利人未开放音频直链或第三方嵌入，且已声明「暂未授权切片」</span></li>')
-    for rep in e.get('reports') or []:
-        if rep.get('url'):
-            res.append(f'<li><span class="res-k">报道</span><a href="{H.escape(rep["url"])}" target="_blank" rel="noopener">{H.escape(rep.get("label") or rep["url"])}</a>'
-                       f'<span class="res-sub">转述，非原片</span></li>')
-    res.append('</ul></section>')
+            res.append(f'<li><span class="res-k">官方</span><a href="{H.escape(lk["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(lk["label"])}</a></li>')
+    for rep_ in e.get('reports') or []:
+        if rep_.get('url'):
+            res.append(f'<li><span class="res-k">报道</span><a href="{H.escape(rep_["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(rep_.get("label") or rep_["url"])}</a></li>')
+    res.append('</ul><p class="res-note">精读是本站依据公开材料写的评论，不是官方文稿或逐字稿。'
+               f'<a href="{sp("/disclaimer/")}">版权与说明</a></p></section>')
     resources = ''.join(res)
 
     def pn_link(ne, label):
@@ -677,12 +624,10 @@ def sync_index(eps):
     tpl = ROOT / 'index.template.html'
     f = SITE / 'index.html'
     html = tpl.read_text() if tpl.exists() else f.read_text()
-    n_zh = sum(1 for x in eps if x.get('r'))
-    since = min((x['d'] for x in eps if x.get('d')), default='')[:4]
     latest = next((x for x in eps if x.get('r')), None)
-    sub = f'{len(eps)} 期深度阅读 · {n_zh} 篇中文精读' + (f' · {since} 年至今' if since else '')
+    sub = SITE_SUB
     title = f'{SITE_NAME} · 按时间读下去'
-    desc = f'{SITE_NAME}：{sub}。{TAGLINE} 不设话题分类。'
+    desc = f'{SITE_NAME} · {SITE_SUB}。按时间排列的中文精读。'
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "WebSite", "@id": f'{DOMAIN}/#website', "name": SITE_NAME, "url": absu('/'),
          "description": desc, "inLanguage": "zh-CN", "publisher": {"@id": f'{DOMAIN}/#org'},
@@ -722,6 +667,14 @@ def sync_index(eps):
                   rf'\1{"image/svg+xml" if og.endswith(".svg") else "image/png"}"', html, count=1)
     html = re.sub(r'(style\.css\?v=)\d+', rf'\g<1>{CSS_V}', html)
     html = re.sub(r'(app\.js\?v=)\d+', rf'\g<1>{APP_V}', html)
+    # 只有 1 期时，检索工具与重复卡片列表都不出现，首屏只留一篇精读。
+    if len(eps) <= 1:
+        html = html.replace('<div class="toolbar">', '<div class="toolbar" hidden>', 1)
+        html = html.replace('<div id="grid" class="grid">', '<div id="grid" class="grid" hidden>', 1)
+        html = html.replace('<div class="result-line" id="resultLine" aria-live="polite">',
+                            '<div class="result-line" id="resultLine" aria-live="polite" hidden>', 1)
+        html = html.replace('<div id="sentinel" class="sentinel">',
+                            '<div id="sentinel" class="sentinel" hidden>', 1)
     html = html.replace('{{DOMAIN}}', DOMAIN).replace('{{BASE}}', BASE)
     if '{{' in html:
         raise SystemExit('index template still has unresolved placeholders')
@@ -737,7 +690,7 @@ def page_shell(title, desc, body, path='/', robots='index, follow', canonical=Tr
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#FBF7F0">
 <title>{H.escape(title)}</title>
 <meta name="description" content="{H.escape(desc)}">
 <meta name="robots" content="{robots}">
@@ -783,12 +736,11 @@ def build_disclaimer():
       <p>封面为本站自制的纯文字排版，不使用节目画面、剧照、嘉宾肖像或平台标识。文中出现的姓名、账号名、节目与计划名称仅用于指明评论对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
 
       <h2>五、代码与正文的许可</h2>
-      <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。转载或引用请署名「时初白精读」并链接到对应页面，且不得删改本说明。</p>
+      <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
 
       <h2>六、更正与下架</h2>
       <p>权利人、嘉宾或其代理如认为某处引用、封面或链接不当，或希望撤下某一页，请在 <a href="https://github.com/ruiyaoe-hash/shichubai-reads/issues" target="_blank" rel="noopener noreferrer">仓库开 Issue</a>，说明具体页面与理由。核实后本站会更正、补充出处或删除该页及其构建产物，不要求对方先行提供争议证明。事实性错误同样欢迎指出。</p>
 
-      <p class="disclaimer-updated">本说明随站点内容一起维护；最近核对：{TODAY}。</p>
     </div>
   </article>
   <nav class="ep-prevnext"><span></span><a href="{sp('/')}">← 返回全部单集</a></nav>
@@ -796,7 +748,7 @@ def build_disclaimer():
     out = SITE / 'disclaimer' / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page_shell(
-        '版权、来源与内容说明 · 时初白精读',
+        f'版权、来源与内容说明 · {SITE_NAME}',
         '非官方评论站点。不保存、不嵌入、不分发访谈音视频，只提供权利人自行发布页面的外链。中文精读是评论，不是官方文稿。',
         body, path='/disclaimer/'))
     print('disclaimer: ok')
@@ -823,7 +775,7 @@ def build_archive(eps):
     title = f'单集目录 · {SITE_NAME}'
     body = f"""<main class="wrap ar-main" id="main">
   <header class="ep-head"><div class="ep-kicker">单集目录</div><h1 class="ep-title">全部 {len(eps)} 期</h1>
-    <p class="ep-dek">按时间排列。没有话题分类。标了「精读」的有中文长文。</p></header>
+    <p class="ep-dek">按时间从新到旧排列。</p></header>
   <nav class="ar-nav" aria-label="按年份跳转">{nav}</nav>
   {''.join(sec)}
 </main>"""
@@ -849,7 +801,7 @@ def build_sitemap(eps):
 
 def build_llms(eps):
     lines = [f'# {SITE_NAME}', '', f'> {TAGLINE}', '',
-             '中文精读是评论，不是官方文稿。本站不保存、不嵌入、不分发任何访谈音视频，只提供权利人自行发布页面的外链。',
+             '中文精读是评论，不是官方文稿。本站不托管音视频，只提供官方页面外链。',
              f'目录：{absu("/archive/")}', f'RSS：{absu("/feed.xml")}', '']
     for x in eps:
         if x['s'] in ZH:
@@ -904,7 +856,7 @@ def build_feed(eps):
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">\n'
         f'<channel><title>{SITE_NAME}</title><link>{absu("/")}</link>'
         f'<atom:link href="{absu("/feed.xml")}" rel="self" type="application/rss+xml"/>'
-        f'<description>{H.escape(TAGLINE)} 中文精读全文。本站不托管、不分发访谈音视频，RSS 不含任何 enclosure。</description>'
+        f'<description>{H.escape(SITE_NAME)} · 中文精读全文。本站不托管访谈音视频。</description>'
         f'<language>zh-CN</language><lastBuildDate>{last_build}</lastBuildDate>'
         '<generator>shichubai-reads build.py</generator>\n'
         + '\n'.join(items) + '\n</channel></rss>\n')
@@ -944,8 +896,8 @@ def build_meta_files():
         icons.append({"src": sp('/icon-512.png'), "sizes": "512x512", "type": "image/png", "purpose": "maskable"})
     manifest = {
         "name": SITE_NAME,
-        "short_name": "时初白",
-        "description": TAGLINE,
+        "short_name": "初白岛",
+        "description": SITE_SUB,
         "lang": "zh-CN",
         "start_url": sp('/') if sp('/') != '' else '/',
         "scope": sp('/') if sp('/').endswith('/') else sp('/') + '/',
@@ -981,9 +933,10 @@ def assert_site():
     """
     css = (SITE / 'style.css').read_text()
     for needle in (
-        'filter: grayscale(1) contrast(1.05)',
-        '.card:hover .thumb img, .cont-item:hover .cont-thumb img, .hero:hover .hero-media img { filter: none; }',
-        'transform: scale(1.025)',
+        '--bg: #FBF7F0',
+        '--clay: #A9684B',
+        '.ip-seal',
+        '@keyframes breathe',
     ):
         if needle not in css:
             raise SystemExit('thumbnail hover CSS missing: ' + needle)
@@ -1014,8 +967,8 @@ def assert_site():
             raise SystemExit('missing episode page: ' + e['slug'])
         text = ep.read_text()
         lks = official_links(e)
-        if lks and 'source-links' not in text:
-            raise SystemExit('official links block missing: ' + e['slug'])
+        if lks and 'ep-source' not in text:
+            raise SystemExit('official source link missing: ' + e['slug'])
         for lk in lks:
             # 页面里对 & 做了 HTML 转义，两种形式都算命中。
             if lk['url'] not in text and H.escape(lk['url']) not in text:
