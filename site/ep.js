@@ -234,7 +234,12 @@
     aside = $('.ep-toc');
     if (heads.length > 2) {
       heads.forEach((h, i) => { if (!h.id) h.id = 's' + (i + 1); });
-      const listHTML = '<ol class="toc-list">' + heads.map((h) => `<li><a href="#${h.id}">${esc(h.textContent)}</a></li>`).join('') + '</ol>';
+      const tocText = (h) => {
+        const c = h.cloneNode(true);
+        c.querySelectorAll('.sec-time').forEach((n) => n.remove());
+        return c.textContent.trim();
+      };
+      const listHTML = '<ol class="toc-list">' + heads.map((h) => `<li><a href="#${h.id}">${esc(tocText(h))}</a></li>`).join('') + '</ol>';
       tocPop = document.createElement('div');
       tocPop.className = 'pop pop-toc';
       tocPop.hidden = true;

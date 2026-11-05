@@ -1,0 +1,518 @@
+<aside class="doc-meta" aria-label="本文说明">
+<p><strong>副标题：建立一个值得信任的 AI 编程环境，让智能体能够持续交付高质量代码</strong></p>
+<ul><li><strong>分享者</strong>：Lauren（X：@poteto）</li><li><strong>所在团队</strong>：xAI，参与 Grok Bot 相关工作</li><li><strong>原始来源</strong>：<a href="https://x.com/poteto/status/2102050467505430555" target="_blank" rel="noopener noreferrer">https://x.com/poteto/status/2102050467505430555</a></li><li><strong>分享时长</strong>：约 38 分 02 秒</li><li><strong>文本说明</strong>：本文以原视频内容为基础，是通读后的整理译文，并非逐句机械对应的翻译。在尊重原作品的基础上重新组织内容结构，并尽量保留讲者实际说出的内容、案例、工具名称、技术细节和关键数据。文末附有术语表，便于学习和复习。</li></ul>
+</aside>
+
+<h2>一、先理解整场分享：真正的关键不是多开 Agent，而是建立信任<small class="sec-time">（原始时间：00:00）</small></h2>
+
+<p>Lauren 在 X 上的账号是 <strong>poteto</strong>，她在 xAI 参与 Grok Bot 的开发。她在口播中提到，自己上个月向生产环境合入了大约两千个 PR（Pull Request，拉取请求）。她并不是一开始就给自己设定了“一个月合入两千个 PR”的目标。这个结果，是她持续改进 Agent 的工作环境、工具和代码库之后逐渐形成的。</p>
+
+<p>她想讨论的核心问题是：<strong>怎样才能放心地把工作交给 Agent，让它即使在你不盯着的情况下，也能持续产出正确、可靠、质量过关的代码？</strong></p>
+
+<p>她给出的答案，并不是简单地增加 Agent 数量，也不是只靠写一段更好的提示词，而是要把整个工程环境设计好。这个环境包括：</p>
+
+<ul><li><strong>代码库和架构</strong>：让正确的写法成为最容易采用的写法，让常见错误尽可能无法发生。</li><li><strong>自动化验证</strong>：让 Agent 能够自己启动应用、运行检查、定位问题，并用实际结果证明工作是否有效。</li><li><strong>静态分析和质量约束</strong>：用工具和规则及时发现问题，而不是等人类在代码评审时才发现。</li><li><strong>Rules、Skills 等工作规范</strong>：把资深工程师的经验整理成 Agent 可以重复使用的工作方法。</li><li><strong>自动化协作流程</strong>：让 Agent 能够接收外部事件、调用工具、启动其他 Agent，并完成从发现问题到提交代码的工作。</li></ul>
+
+<p>当这些基础设施逐步建立起来，工程师就不必再亲自盯着每一个操作、纠正每一个错误。人的工作重心会从“亲手完成每一步”，转向“设计环境、建立标准、验证结果和持续改善系统”。</p>
+
+<p>Lauren 不太喜欢把这种模式称为“软件工厂（software factory）”。她更喜欢用<strong>米其林厨房（Michelin kitchen）</strong>来比喻：软件开发不是流水线上简单、机械地批量生产商品，而是一个需要创造力、专业判断和团队协作的过程。即使 Agent 承担了大量具体工作，人仍然要对最终产品负责，也必须认真设计整个“厨房”——包括打荷（line cooks）、主厨助理（sous chefs）等岗位如何分工，配备什么设备、接受什么训练，以及洗碗工与打荷人员如何配置。这些安排都会影响最终出品。</p>
+
+<p>这也是整场分享的主线：<strong>要想扩大 Agent 的工作规模，先要建立一个让人敢于信任它的工作环境。</strong></p>
+
+<h2>二、她为什么开始改造 Agent 工作流：人类工程师成了瓶颈<small class="sec-time">（原始时间：00:02）</small></h2>
+
+<h3>1. 加入 Cursor 后，首先遇到的是性能问题</h3>
+
+<p>大约六个月前，Lauren 加入 Cursor（她特别说明，那时 Cursor 还没有并入 xAI）。当时她还没有现成的 Agent Skill 可以使用，刚进入团队，面对的是一套陌生的代码库和一款新产品。</p>
+
+<p>Cursor 当时正在开发一种 Cursor IDE 的替代形态，叫作 <strong>Agents Window（智能体窗口）</strong>。在她加入之前，这个窗口已经存在不少性能问题。她的经理问她能不能帮忙解决。由于她此前在 React 团队工作过一段时间，具备相关经验，因此接手这项工作比较合适。</p>
+
+<p>问题很快显现出来：<strong>代码变更的速度太快，人工性能检查根本跟不上。</strong></p>
+
+<p>新的 PR 不断进入代码库。Lauren 虽然知道如何做性能分析，却很难及时判断每一轮代码变更是否导致了性能回退。她早期花了大量时间使用 Chrome DevTools（Chrome 开发者工具）检查应用性能，手动完成以下工作：</p>
+
+<ul><li>查看应用运行时的性能表现；</li><li>记录 performance trace（性能追踪），观察程序运行时发生了什么；</li><li>获取 heap snapshot（堆快照），检查内存使用情况；</li><li>根据这些数据分析性能问题。</li></ul>
+
+<p>这些工作非常依赖人工，而且重复、耗时。随着 PR 持续涌入，人工检查逐渐成了整个开发流程中难以跨越的瓶颈。</p>
+
+<h3>2. 她开始追问：为什么不让 Agent 自己完成验证？</h3>
+
+<p>Lauren 意识到，团队已经有 Agent，却仍然在大量手工执行本可以自动化的工作。于是她开始思考：能不能训练 Agent 自己完成性能检查？</p>
+
+<p>她希望 Agent 能够：</p>
+
+<ol><li>自己启动应用；</li><li>自动抓取性能追踪数据；</li><li>理解这些数据；</li><li>找出性能问题的热点位置；</li><li>根据分析结果持续调整代码，逐步改善应用性能。</li></ol>
+
+<p>这里她用了一个形象的说法：让 Agent 自动“爬山”（hill-climb），也就是通过不断检查、调整和再验证，一步一步把性能指标做上去。</p>
+
+<p>这促使她开始制作<strong>验证类 Skill（verification skill）</strong>，把原本依赖工程师亲自完成的检查流程，变成 Agent 可以反复执行的能力。</p>
+
+<h3>3. 她逐渐发现，真正的瓶颈是自己</h3>
+
+<p>在 Cursor 和 xAI 的这六个月里，Lauren 明显感受到自己的生产力提升。她并没有刻意追求每月合入多少 PR，但她后来发现，自己做的 Skill、工具以及代码库改造，最终都指向同一个目标：建立信任。</p>
+
+<p>她意识到，自己作为工程师积累的知识，如果始终只存在于自己的脑子里，那么无论有多少 Agent，自己都仍然是整个系统的瓶颈。</p>
+
+<p>所以她开始把这些经验和知识沉淀到 Agent 团队能够使用的环境中。这样一来，她就不必再亲自介入每一件事，也不必成为所有任务的必经节点。</p>
+
+<h2>三、Agent 要从少量使用走向规模化，必须先跨过“信任”这道坎<small class="sec-time">（原始时间：00:05）</small></h2>
+
+<h3>1. 从盯着一两个 Agent，到管理上百个 Agent</h3>
+
+<p>Lauren 把使用 Agent 的过程理解成一条逐步建立信任的路径。</p>
+
+<p>在最初阶段，一个人可能只敢同时使用一到五个 Agent，而且必须持续盯着它们的每次对话和每项工作。Agent 做错了，需要人及时介入、纠正方向、补充信息，甚至直接告诉它下一步应该怎么做。</p>
+
+<p>在这个阶段，人离不开 Agent，Agent 也离不开人。只要人不在场，工作就可能停下来，或者产生错误。</p>
+
+<p>Lauren 认为，这恰恰是最难跨越的阶段之一，因为使用者往往不知道该怎样从“亲自盯着 Agent”走向“放心地让 Agent 自主工作”。</p>
+
+<p>根本原因仍然是信任不足：<strong>如果你不相信 Agent 的产出，就不可能放心地把工作规模从一两个、五个扩大到一百个。</strong></p>
+
+<h3>2. 没有信任就盲目增加 Agent，只会放大问题</h3>
+
+<p>如果在没有建立可靠工作环境的情况下，就直接启动大量子 Agent 或 Cloud Agent（云端智能体），结果往往不是生产力提高，而是问题成倍增加：</p>
+
+<ul><li>出现大量低质量、缺乏实际价值的 PR。Lauren 把这类 PR 称为 <strong>slop PR</strong>，可以理解为由 AI 大量生成、但质量和实用性都不过关的代码提交；</li><li>引入大量 regression（回归问题），也就是原本正常的功能或性能，因为新代码而重新出现问题；</li><li>把更多 bug（程序缺陷）合并进代码库；</li><li>人类不得不花更多时间检查、返工和修复。</li></ul>
+
+<p>这种情况下，Agent 数量虽然增加了，团队整体却未必更高效。</p>
+
+<p>因此，正确的问题不是“怎样同时启动更多 Agent”，而是：<strong>怎样让 Agent 的工作结果更可靠，让我们有依据相信它？</strong></p>
+
+<h2>四、第一步：让 Agent 学会验证自己的工作<small class="sec-time">（原始时间：00:06—00:10）</small></h2>
+
+<p>Lauren 认为，建立信任最直接的起点就是 <strong>Verification（验证）</strong>。所谓验证，就是不只听 Agent 说“我已经完成了”，而是通过实际运行、检查和测量，确认它做的事情确实有效。</p>
+
+<p>验证也有不同层次：一端是容易落地的自动化检查，另一端是难度更高的形式化验证。</p>
+
+<h3>1. 入门层：用 Verification Skill 自动完成实际检查</h3>
+
+<p>在比较容易实现的一端，可以先制作 verification skill，让 Agent 学会启动应用、调试程序、抓取性能数据。</p>
+
+<p>例如，可以让 Agent 使用：</p>
+
+<ul><li><strong>Chrome DevTools Protocol（CDP，Chrome 开发者工具协议）</strong>：让程序或自动化工具能够通过协议控制和检查 Chrome；</li><li>其他调试协议：用于启动、控制和检查应用；</li><li>performance trace：记录应用运行过程中的性能活动；</li><li>heap snapshot：记录某一时刻的内存堆情况，供分析内存使用问题。</li></ul>
+
+<p>通过这些工具，Agent 不再只是根据代码表面推测功能是否正常，而是可以真正运行应用，观察实际运行结果。</p>
+
+<h3>2. 更高阶：形式化验证</h3>
+
+<p>在更难的一端，是 <strong>Formal Verification（形式化验证）</strong>。</p>
+
+<p>形式化验证希望通过数学化、可严格推导的方法，检查程序是否满足预先定义的条件。例如，业务系统中可能存在一些必须始终成立的规则或约束，叫作 <strong>invariants（不变量）</strong>。形式化验证希望证明这些不变量在程序运行和状态变化过程中始终成立，从而更严格地证明应用处于正确状态。</p>
+
+<p>Lauren 提到 Lean、TLA+ 等工具或语言，以及形式化方法。她也明确指出，这一方向难度很高，至今仍有不少开放问题，绝大多数团队并不能轻易做到。</p>
+
+<p>但她强调：<strong>即使无法开展形式化验证，只要先把常规的 verification skill 做好，也已经能取得很大进展。</strong></p>
+
+<h3>3. Control Glass：把验证能力做成可重复使用的工具</h3>
+
+<p>Lauren 刚加入 Cursor、开始处理 Agents Window 的性能问题时，做的第一个 Skill 叫 <strong>Control Glass</strong>。它是一个控制和验证类 Skill，主要教 Agent 如何启动应用、抓取性能追踪数据，并通过 Chrome DevTools Protocol 完成相关操作。</p>
+
+<p>她后来逐步完善了这个 Skill，并发现它实际上需要两个部分配合：<strong>CLI 和 Feature Map。</strong></p>
+
+<h4>第一部分：CLI，让操作流程标准化、可重复</h4>
+
+<p><strong>CLI（Command-Line Interface，命令行界面/命令行工具）</strong>，可以简单理解为：通过输入命令来运行程序或执行某项操作，而不是每次都靠人工点击界面。</p>
+
+<p>在 Control Glass 中，CLI 的作用是让 Agent 能够按照固定流程启动应用、收集性能追踪数据和其他实证材料。</p>
+
+<p>为什么要把这些操作做成 CLI？</p>
+
+<p>因为如果每次任务都让 Agent 临时编写一套脚本，不同会话可能采用不同方法，执行结果也可能不一致。把 CLI 放在 Skill 目录中，Agent 每次都调用同一套经过打磨的工具，就能让操作过程更加标准化、可重复。</p>
+
+<p>当然，CLI 本身也需要认真设计和维护：要覆盖各种实际使用场景，并且能够正确启动应用、完成所需操作。</p>
+
+<p>最终目标是让 Agent 可以拿出可验证的证据，例如：代码确实在运行，相关性能门槛确实达到了，而不是仅仅声称自己已经完成。</p>
+
+<h4>第二部分：Feature Map，让 Agent 理解应用本身</h4>
+
+<p>只有工具还不够。Agent 即使能够启动应用、操作界面，也未必理解用户到底在说什么。</p>
+
+<p>Lauren 举了一个实际例子：团队在 Slack 中收到用户反馈，用户贴了一张很大的截图，但真正想指出的只是界面中的一个小区域，旁边还附了三个问号。Agent 虽然能运行应用，却不知道截图中的区域对应哪个功能，只能猜测用户的意思。</p>
+
+<p>为了解决这个问题，她提出了 <strong>Feature Map（功能地图）</strong>。这个概念有点类似 Sitemap（站点地图）：站点地图帮助人理解网站有哪些页面、页面之间如何组织；Feature Map 则帮助 Agent 理解应用有哪些功能，以及这些功能如何工作。</p>
+
+<p>它会记录的信息包括：</p>
+
+<ul><li>应用中有哪些功能；</li><li>每个功能具体做什么；</li><li>用户怎样进入某项功能，例如使用什么快捷键；</li><li>用户需要点击哪些 DOM 元素才能到达对应位置；</li><li>应用不同区域和功能之间的关系。</li></ul>
+
+<p>Lauren 把 Feature Map 称为一种 <strong>Materialized Memory（物化记忆）</strong>。通俗地说，就是把原本需要 Agent 临时阅读、推断和记住的信息，提前整理成一份存在代码库里的结构化资料，让 Agent 随时可以读取，而不必每次从零猜测。</p>
+
+<p>Feature Map 存放在 Skill 自身以及代码库的 Skill 目录中，团队还配有自动化机制来维护它。</p>
+
+<h4>两部分结合后，Agent 才既能操作，也能理解</h4>
+
+<p>CLI 和 Feature Map 结合起来，效果就明显增强了：</p>
+
+<ul><li>CLI 让 Agent 能够按照固定流程启动和控制应用，并抓取性能数据；</li><li>Feature Map 让 Agent 理解应用的功能结构，知道用户反馈指向哪里、相关功能如何使用。</li></ul>
+
+<p>这样，Agent 不但能够操作应用、收集证据，还能够理解来自内部或外部用户的请求。</p>
+
+<p>Lauren 认为，这类 Control Skill 和 Verification Skill 后来逐渐成为团队的重要基础设施，需要持续维护。让 Agent <strong>自己验证自己的工作</strong>，是建立信任最有力量的方式之一。</p>
+
+<h2>五、第二步：从“能做对”走向“像优秀工程师一样做好”<small class="sec-time">（原始时间：00:12）</small></h2>
+
+<h3>1. 验证正确，不等于代码质量优秀</h3>
+
+<p>Lauren 特别区分了两个概念：<strong>正确性（Correctness）</strong>和<strong>质量（Quality）</strong>。</p>
+
+<p>验证首先解决的是正确性问题：代码或功能有没有实现预期效果？例如，结账按钮点击之后是否真的完成了结账？</p>
+
+<p>通过实际运行和检查，Agent 可以拿出证据，证明功能确实能够工作。</p>
+
+<p>但这还不够。一个功能即使能够运行，也不代表它的性能好，更不代表代码结构合理、易于维护。因此，验证本身并不能完整回答以下问题：</p>
+
+<ul><li>应用运行得够不够快？</li><li>代码是否符合团队的工程标准？</li><li>实现方式是否清晰、可靠、便于后续维护？</li></ul>
+
+<p>要解决这些问题，还需要教 Agent <strong>像真正的软件工程师一样工作</strong>。</p>
+
+<h3>2. P-Stack：把工程师的工作方法整理成 Skill 和 Playbook</h3>
+
+<p>Lauren 做过一个名为 <strong>P-Stack</strong> 的插件。她在分享中没有展开讲解这个插件的具体实现，但提到其中包含大量来自自己多年工程实践的工作流和 Skill。</p>
+
+<p>这些工作流涉及：</p>
+
+<ul><li>调试（debugging）；</li><li>功能开发（feature development）；</li><li>原型制作（prototyping）；</li><li>以及其他日常软件工程活动。</li></ul>
+
+<p>P-Stack 中有一整套 <strong>Playbook（工作手册/操作指南）</strong>和 Skill，用来教 Agent 按照团队期望的方式完成编码工作。</p>
+
+<p>她还提出，团队中更资深的工程师可以把自己的经验贡献出来，逐步建立团队级的 Skill 仓库。这样，优秀工程师的工作方法就不再只存在于个人经验中，而可以成为整个 Agent 团队都能调用的能力。</p>
+
+<h3>3. 把工程方法与验证结合起来</h3>
+
+<p>如果把工程实践类 Skill 与 Verification Skill 结合起来，Agent 就不仅能够检查工作是否正确，还能按照更高的工程质量标准完成任务。</p>
+
+<p>与此同时，自动化验证还可以帮助团队收集真实的性能指标、统计数据以及 <strong>Telemetry（遥测数据）</strong>。这些数据能够反映应用在实际运行中的状态，而不只是代码层面的主观判断。</p>
+
+<p>Lauren 认为，这一部分非常值得投入时间。</p>
+
+<h2>六、第三步：把代码库改造成 Agent 更容易正确工作的环境<small class="sec-time">（原始时间：00:14）</small></h2>
+
+<p>Lauren 认为，如果未来大量代码都将由 Agent 编写，那么软件团队就必须重新思考代码库和系统架构：<strong>不能只要求 Agent 自己变聪明，还要让整个工程环境默认就能引导它做对事情。</strong></p>
+
+<p>她把建立 Agent 信任的过程描述成一条标尺或连续谱（scale / continuum），并列出了大约五点。以下按她在分享中给出的顺序展开：从代码库和设计方式开始，再到自动化检查、工作规则，最后是依赖人工执行的风格规范。</p>
+
+<h3>1. 第一层：代码库本身，就是 Agent 最重要的记忆</h3>
+
+<p>Lauren 认为，代码库（Codebase）本身就是最好的记忆形式之一。</p>
+
+<p>原因在于，Agent 很容易沿用自己看到的既有模式。大语言模型（LLM）的工作方式决定了它会大量参考当前上下文中的内容，而 Agent 打开、阅读的代码文件，本身就是上下文的一部分。</p>
+
+<p>因此，当 Agent 接到一个新任务时，它通常不会在每个 PR 中都把整个代码库重新设计一遍，而是会观察已有代码的组织方式，再沿着现有模式继续扩展。</p>
+
+<p>这意味着：</p>
+
+<ul><li>如果代码库里的模式清晰、统一，Agent 更容易延续正确做法；</li><li>如果代码库里存在错误或糟糕的模式，Agent 也可能照着它继续写；</li><li>如果某种错误写法已经出现很多次，它就更容易被 Agent 当成理所当然的标准。</li></ul>
+
+<p>所以，代码库不是被动存放代码的地方，它同时也在向 Agent 传递“应该怎样写代码”的信号。</p>
+
+<h3>2. 第二层：通过更好的数据结构或算法，让某类错误从根本上不可能发生</h3>
+
+<p>Lauren 接着强调，团队可以通过更好的 <strong>Data Structures（数据结构）</strong>或 <strong>Algorithms（算法）</strong>，让某一类错误在设计层面就变得 <strong>Categorically Impossible（从类别上不可能发生）</strong>。</p>
+
+<p>这里的关键不是等 Agent 写出错误后，再靠人或检查工具把它拦下来；而是提前调整程序的结构和实现方式，让这类错误没有机会出现。</p>
+
+<p>例如，与其反复提醒 Agent 不要采用某种容易出错的写法，不如重新设计数据结构、算法或相关架构，让正确做法成为系统天然支持的方式，让错误做法在结构上难以实现。</p>
+
+<p>这与代码库本身密切相关：团队不仅要让 Agent 看到好的代码模式，还要主动把系统设计得更不容易产生坏模式。</p>
+
+<h3>3. 第三层：静态分析，把错误挡在代码运行之前</h3>
+
+<p>第三类约束是 <strong>Static Analysis（静态分析）</strong>，包括：</p>
+
+<ul><li><strong>Linter（代码检查工具）</strong>：按照预设规则检查代码，发现不符合规范或可能存在问题的写法；</li><li><strong>Compiler Diagnostics（编译器诊断）</strong>：编译器在检查或编译代码时给出的错误、警告等信息；</li><li><strong>CI（Continuous Integration，持续集成）</strong>：代码变更提交后，自动运行构建、测试和检查流程。</li></ul>
+
+<p>这些机制能够把团队的部分工程要求变成可执行的约束，而不是只写在文档里供人参考。</p>
+
+<p>Lauren 提出一个很实用的判断：如果你已经纠正过 Agent 某种错误，但它之后仍然反复犯同样的错，就应该考虑增加一条 Lint Rule（代码检查规则）。更好的做法，通常是结合上一层的思路，进一步改造代码结构，让这类错误从根本上难以发生。</p>
+
+<h3>4. 第四层：Rules、Bugbot 和 Skills，给 Agent 明确的工作指引</h3>
+
+<p>再往上一层，是更偏向指导和约束的机制：</p>
+
+<ul><li><strong>Rules（规则）</strong>：告诉 Agent 在特定代码库或任务中应遵守什么要求；</li><li><strong>Bugbot</strong>：讲者点名提到的工具；原文没有进一步展开其功能细节；</li><li><strong>Skills（技能）</strong>：将某类工作的方法、工具使用方式和操作流程整理成 Agent 可以调用的能力。</li></ul>
+
+<p>这些内容能够引导 Agent 按照团队希望的方式工作，但它们的强制程度相对较弱。Agent 可能因为各种原因没有读到某条规则，或者负责启动 Agent 的人忽略了相关配置。</p>
+
+<p>因此，它们很有用，却不能完全替代代码库本身的设计和自动化检查。</p>
+
+<h3>5. 第五层：Style Guide 和人工 Code Review</h3>
+
+<p>最后一层是 <strong>Style Guide（代码风格指南）</strong>。它规定代码应该如何命名、排版、组织，以及团队偏好的编码风格。</p>
+
+<p>这类规范通常需要通过 <strong>Code Review（代码评审/代码审查）</strong>来落实，也就是由工程师检查代码变更，并提出修改意见。</p>
+
+<p>当然，Style Guide 中的一些要求也可以写进 Rules、Bugbot 或 Skills。但如果规范没有被转化为这些机制，最终还是要依赖人类在评审时逐行检查、发现问题并留言。</p>
+
+<p>当 PR 的提交速度很快时，这种做法就很难持续。人不可能一直盯着每一行代码，也很难保证每次评审都能记住所有规范。</p>
+
+<p>所以 Lauren 明确表示：<strong>不建议只依赖 Style Guide 和人工 Code Review。</strong></p>
+
+<p>人工评审可以帮助团队发现问题，但更重要的是，把发现的问题反向沉淀到前面几层：改进代码库和架构，通过更好的数据结构或算法让错误类别上不可能，再完善静态分析，并叠加 Rules、Bugbot 和 Skills。</p>
+
+<h2>七、Dune：让 Agent 走捷径时，走的恰好是正确的路<small class="sec-time">（原始时间：00:19）</small></h2>
+
+<h3>1. 为 Grok Bot 建立 Agent-friendly Framework</h3>
+
+<p>在代码库和架构这一层，Lauren 的团队为驱动 Grok Bot 建立了一套名为 <strong>Dune</strong> 的框架。她将其称为 <strong>Agent-friendly Framework（对智能体友好的框架）</strong>。</p>
+
+<p>Dune 的设计灵感，很大一部分来自她在 Cursor Agents Window 中遇到的性能问题。</p>
+
+<p>她总结出一个非常关键的观察：<strong>Agent 很喜欢走捷径。</strong></p>
+
+<p>既然 Agent 总会倾向于选择最简单、最直接的实现方式，为什么不干脆把框架设计成：最容易走的那条路，本身就是正确的路？</p>
+
+<p>这意味着代码库可能会显得限制很多：哪些事情可以做、哪些事情不能做，都有严格约定。对习惯自由发挥的人类工程师来说，这样的环境有时会显得不够灵活，甚至有些烦人。</p>
+
+<p>但对 Agent，尤其是上下文有限、推理能力不强的 Agent 来说，这种环境反而非常理想。它不需要理解太多复杂约定，也不必在很多实现方式中自行选择，只要沿着预先铺好的路径完成任务，就更容易得到正确结果。</p>
+
+<h3>2. 未来进入代码库的人，不一定都是工程师</h3>
+
+<p>Lauren 还特别提到，未来向代码库贡献功能的人，可能不再只有专业工程师，也可能包括设计师、产品经理，甚至 CEO。</p>
+
+<p>这些人可能很忙，对代码库的了解有限，也不一定有足够的技术背景。他们可能只是启动一个 Agent，让 Agent 替自己完成某项功能。</p>
+
+<p>因此，团队必须认真考虑：怎样设计代码库和开发环境，才能让一个上下文很少、使用者也不一定懂技术的 Agent，默认就能把事情做好？</p>
+
+<p>这也是 Dune 这类框架的意义：<strong>将团队经过验证的工程经验变成默认路径，而不是要求每个 Agent、每个使用者都重新学习一遍。</strong></p>
+
+<h3>3. 坏模式也会被 Agent 复制和放大</h3>
+
+<p>代码库既然是 Agent 的记忆，那么它的影响就不只体现在正确模式上。</p>
+
+<p>如果代码库里已经存在不好的模式，Agent 也会沿用它们。</p>
+
+<p>Lauren 举出的例子是 <strong>Workaround（权宜方案/临时绕行方案）</strong>：为了暂时避开某个问题，工程师可能写下一小段特殊处理代码，或者留一条注释解释为什么要这么做。</p>
+
+<p>这些内容起初看起来可能无伤大雅。但 Agent 很容易把它们当成现有项目的标准做法，继续复制到其他地方。几天或几周之后，一个原本只用于解决局部问题的临时方案，就可能扩散到代码库的很多位置，最终成为所有 Agent 都在沿用的“事实标准”。</p>
+
+<p>这会让代码库越来越难维护。</p>
+
+<p>所以，每当你发现 Agent 犯错，不应该只把当前这一处改好，还要进一步思考：</p>
+
+<ul><li>是否需要修改代码库结构？</li><li>是否可以通过静态分析阻止同类问题？</li><li>是否需要增加 Rules、Bugbot 或 Skills？</li></ul>
+
+<p>目标是避免某个错误模式被不断复制。</p>
+
+<h2>八、把代码库当作花园：及时清理反模式，避免它们蔓延<small class="sec-time">（原始时间：00:22—00:24）</small></h2>
+
+<h3>1. 反模式就像花园里的杂草</h3>
+
+<p>除了米其林厨房，Lauren 还喜欢把代码库比作一座<strong>花园</strong>。</p>
+
+<p>花园里的问题如果不及时处理，就可能从一个小苗头逐渐扩散。代码库也是如此：一个一开始看似无害的临时方案，可能因为 Agent 不断模仿和复制，慢慢扩散成一种普遍写法。</p>
+
+<p>最终，代码库可能充斥着难以维护的代码、性能问题，以及大量通过“氛围编程”（vibe coding）快速拼凑出来、却没有经过充分约束的实现。</p>
+
+<p>在她看来，理想的 Agent 代码库应该有很强的约定和标准化程度。甚至可以严格到让人类工程师觉得不太方便，但这样能够让各种不够成熟的写法更难出现，也更难扩散。</p>
+
+<h3>2. 一个看似无害的例子：Agent 在代码里留注释</h3>
+
+<p>Lauren 举了一个很具体的例子：<strong>代码注释（comments）</strong>。</p>
+
+<p>一开始，她看到 Agent 在代码中添加注释，虽然觉得其中不少内容没有太大价值，但也认为人类工程师同样会写注释。比如：</p>
+
+<ul><li>解释某个边界情况（edge case）；</li><li>说明为什么需要某个 Workaround；</li><li>给接手代码的同事留下提示，帮助他们理解比较难读的代码。</li></ul>
+
+<p>但团队很快发现，Agent 会把代码周围已有的注释当成一种“理由”：它可能不去真正解决问题，而是照着注释继续采用创可贴式的临时方案。</p>
+
+<p>换句话说，注释有时会让 Agent 误以为某种妥协方案是经过认可的设计，于是它继续复制这种方案，而不是追问问题本身能不能被彻底解决。</p>
+
+<p>因此，在驱动 Grok Bot 的 Dune 框架中，团队选择了<strong>禁止写注释</strong>，目的就是避免 Agent 借助已有注释复制和传播不好的模式。</p>
+
+<p>这里需要注意：这是 Lauren 对其团队 Dune 代码库采取的具体设计选择，原文没有把它表述成适用于所有软件项目的通用禁令。</p>
+
+<h3>3. 每个团队都需要一个“园丁”</h3>
+
+<p>Lauren 认为，每个团队都需要一个类似 <strong>Gardener（园丁）</strong>的角色。</p>
+
+<p>就像花园需要有人持续观察杂草、失控生长和害虫，代码库也需要有人持续检查那些正在蔓延的技术问题和不良模式。</p>
+
+<p>这个角色要做的不是等问题变得严重后再大规模整治，而是尽早发现苗头，及时清除，避免它们不断繁殖。</p>
+
+<h3>4. Dune 的三条基本原则</h3>
+
+<p>Lauren 将 Dune 背后的原则概括为三点：</p>
+
+<p><strong>第一，清理已有的技术债（Tech Debt）。</strong></p>
+
+<p>代码库里已经存在的技术债，可能会成为 Agent 模仿和扩散的对象，因此应该尽可能清理。</p>
+
+<p><strong>第二，为最受认可的模式（blessed patterns）建立一条明确的“铺好之路”（Paved Path）。</strong></p>
+
+<p>Paved Path 可以理解为团队为常见任务预先确定的一条标准路线。很多事情最好只有一种被广泛认可的做法，Agent 不需要在多种实现方式之间猜测。</p>
+
+<p>代码库、CI 和 Lint 都应该提供足够明确的引导，让 Agent 自然地走上这条路。</p>
+
+<p><strong>第三，一发现技术债或坏模式，就优先考虑增加 Lint Rule。</strong></p>
+
+<p>发现问题后，不一定每次都要立即彻底重构所有相关代码。但可以先增加一条 Lint Rule，阻止同样的问题继续出现。</p>
+
+<p>这相当于先止血：问题本身可能还没有完全解决，但至少不会任由它继续扩散。</p>
+
+<p>Lauren 强烈建议团队认真思考，怎样防止反模式像病毒一样传播，并持续让 Agent 帮助清理代码库。最终，代码库应该始终处于一种状态：<strong>即使下一个 Agent 直接复制现有写法，你也会觉得放心。</strong></p>
+
+<h2>九、Dune 如何通过架构边界，避免性能问题再次发生<small class="sec-time">（原始时间：00:26）</small></h2>
+
+<p>Lauren 没有打算详细介绍 Dune 的所有技术实现，只挑选了几个有代表性的设计。</p>
+
+<p>Dune 是为 Grok Bot 构建的客户端架构和框架。团队在其中制定了大量约定，包括代码应该放在哪里，以及不同模块之间允许怎样导入。</p>
+
+<h3>1. 不同功能和模块有明确的位置</h3>
+
+<p>在 Dune 应用中，团队对不同组成部分作了清晰划分。例如：</p>
+
+<ul><li><strong>Feature（功能）</strong>会集中放在同一个文件夹中，也就是让同一功能相关的代码共置（co-location）；</li><li>有一个偏 React 侧的入口，可以把它理解成类似路由（routing）的入口；</li><li>有出现在 Grok Bot 应用中的 <strong>Transcript Card（转写/会话卡片）</strong>；</li><li>有运行在 Grok Bot 虚拟机上的 <strong>Host</strong>；</li><li>还有负责驱动整个 Dune 应用的 <strong>Client</strong>。</li></ul>
+
+<p>这些模块并不是随意互相调用的，而是通过严格边界来规定它们之间的关系。</p>
+
+<h3>2. 主进程和渲染进程必须隔离</h3>
+
+<p>Lauren 举的例子是 Electron 应用中的 <strong>Main Process（主进程）</strong>和 <strong>Renderer（渲染进程/渲染线程）</strong>。</p>
+
+<p>团队规定：运行在主进程中的代码，不应该被带到渲染侧运行。</p>
+
+<p>之所以要设置这条边界，是因为她在 Cursor Agents Window 的性能工作中发现，有些代码可能会被错误地导入渲染线程，从而拖慢用户界面。</p>
+
+<p>渲染侧负责界面显示，需要保持足够流畅。按照她在分享中给出的数字：</p>
+
+<ul><li>如果目标是约 <strong>60 FPS（每秒 60 帧）</strong>，每帧的时间预算大约是 <strong>16 毫秒</strong>；</li><li>如果目标是约 <strong>120 FPS（每秒 120 帧）</strong>，每帧的时间预算大约是 <strong>8 毫秒</strong>。</li></ul>
+
+<p>因此，渲染线程不能被长时间运行的任务占住。需要在渲染侧执行的工作，应当能够拆分成较小的任务，分段完成，而不是一次性执行一个很长的操作。</p>
+
+<p>Dune 通过模块导入规则和 <strong>Dependency Graph（依赖关系图）</strong>来强制这些边界，避免不适合在渲染侧执行的代码被引入。</p>
+
+<p>这是一个典型例子：某种写法过去已经导致严重性能问题，团队于是通过架构约束，从类别上消除它再次发生的可能。</p>
+
+<h3>3. 重点不是照搬 Dune，而是把团队经验写进自己的框架</h3>
+
+<p>Lauren 强调，分享 Dune 的细节，并不是要求所有团队都必须使用 Dune。</p>
+
+<p>真正重要的是：<strong>每个团队都可以建立自己的 Agent-friendly Framework，把自己和团队中最优秀工程师的经验编码进去。</strong></p>
+
+<p>过去，很多工程知识只存在于以下地方：</p>
+
+<ul><li>Style Guide 文档；</li><li>人与人之间的口头传授；</li><li>Code Review 中的评论；</li><li>资深工程师在发现问题时给出的修改意见。</li></ul>
+
+<p>这些知识如果始终依赖人类记忆和人工提醒，就很难规模化地传递给大量 Agent。</p>
+
+<p>团队应该思考：能不能把这些知识提取出来，固化到框架和代码库中，让代码库本身成为一种记忆？</p>
+
+<p>Lauren 反复强调，代码库就是希望 Agent 继续扩展的那套系统状态的<strong>物化快照（materialized snapshot）</strong>。它应该足够干净、足够规范。这样，下一个 Agent 进入代码库时，就更有可能延续已有的好模式，并继续把它维护好。</p>
+
+<h2>十、搭建“米其林厨房”：让 Grok Bot 与 Cursor 配合工作<small class="sec-time">（原始时间：00:30）</small></h2>
+
+<h3>1. 当各层基础设施叠加起来，信任就会形成</h3>
+
+<p>如果团队在代码库、Lint、诊断、Rules、Bugbot 和 Skills 等方面持续投入，就会逐渐形成一个可靠的工作环境。</p>
+
+<p>Lauren 再次用米其林厨房作比喻：厨房里的工具、流程和训练方式，都应该让工作人员更容易做出正确的菜品。厨房本身也可能有危险，管理者当然不希望有人在工作时受伤。</p>
+
+<p>如果某个厨师或洗碗工总是被厨房里的某个地方绊倒，管理者不会只提醒他下次小心，而是应该想办法把那个问题解决，并确保其他人也不会再次被绊倒。</p>
+
+<p>代码库也应该如此。如果 Agent 总在某个地方犯错，就应该改善环境，让后续 Agent 不再轻易遇到同样的问题。</p>
+
+<p>在 Dune 这样约束明确的代码库中，很多不好的写法几乎没有机会出现。即使是上下文较少、推理能力不强的 Agent，也可能写出质量不错的代码。</p>
+
+<h3>2. Grok Bot 擅长外环：接入信息来源，发现问题并启动工作</h3>
+
+<p>Lauren 认为，Grok Bot 和 Cursor 搭配起来很有意思。</p>
+
+<p>她特别提到 Grok Bot 擅长 <strong>Outer Loop（外环）</strong>工作。这里的外环，可以理解为围绕开发任务运转的外部信息和事件处理流程。</p>
+
+<p>Grok Bot 可以连接团队正在使用的各种服务，例如：</p>
+
+<ul><li><strong>Slack</strong>：团队沟通和消息；</li><li><strong>Datadog</strong>：监控和运维相关信息；</li><li><strong>Sentry</strong>：错误和异常告警；</li><li><strong>PlanetScale</strong>：团队使用的数据库相关服务。</li></ul>
+
+<p>接入这些服务之后，Grok Bot 可以把不同来源的信息汇总起来，并根据这些信息作出判断。</p>
+
+<p>有些人把这种能力称为“公司大脑”（company brain）。不过 Lauren 认为，没有必要把它设计得特别复杂，因为 Agent 本来就擅长调用工具。只要把需要的工具连接起来，再让 Grok Bot 能够自动启动 Cloud Agent，就可以建立一套相当有用的自动化流程，并不一定需要投入大量基础设施。</p>
+
+<h3>3. Routines：让外部事件自动触发 Agent 工作</h3>
+
+<p>Grok Bot 还可以通过 <strong>Routines（例行任务/自动化例程）</strong>来执行持续性的任务。</p>
+
+<p>例如，它可以订阅 Slack 线程或 Sentry 告警。当相关消息或告警出现时，Grok Bot 就能自动启动后续工作，必要时拉起 Cloud Agent 处理任务。</p>
+
+<p>这样，团队就不必完全依赖人类主动发现问题、手动整理信息，再手动安排 Agent 开始工作。</p>
+
+<h3>4. 代码库、Rules 和 Skills 会产生复利效应</h3>
+
+<p>当代码库、Rules 和 Skills 等基础设施逐步完善后，它们的价值并不是彼此独立的，而是会形成<strong>复利（compounding）</strong>。</p>
+
+<p>例如：</p>
+
+<ul><li>Grok Bot 可以自动响应外部事件；</li><li>它可以启动 Cloud Agent 承担具体工作；</li><li>Agent 可以复用代码库中已有的规范、Rules 和 Skills；</li><li>团队还可以配置 Cursor Automations（自动化流程），通过 Cursor SDK 搭建额外的 Bot；</li><li>这些 Bot 可以复用已有 Agent 基础设施，承担更复杂的任务。</li></ul>
+
+<p>Lauren 提到，Cursor 中已经有一些类似的自动化实践，例如：</p>
+
+<ul><li>自动复现用户报告的 Bug；</li><li>自动创建 PR。</li></ul>
+
+<p>这些能力建立在之前已经投入的基础设施之上。随着工具、规范和自动化流程越来越成熟，新增能力可以复用已有成果，整个团队也会因此获得更大的价值。</p>
+
+<h2>十一、最后的建议：每次纠正 Agent，都要反过来改善环境<small class="sec-time">（原始时间：00:35）</small></h2>
+
+<p>在分享结尾，Lauren 回到最初的“信任图谱”。</p>
+
+<p>她认为，如果团队愿意持续投入时间，把建立信任所需的各项基础设施补齐，就能逐步提高对 Agent 的信任程度，也能更放心地让多个 Agent 并行工作。</p>
+
+<p>这不只会提高单个工程师的产出，还能让整个团队在已有 Agent 基础设施上继续建设，使每一位工程师、每一位 Builder（构建者/产品开发者）都能够更高效地完成工作，并产出高质量代码。</p>
+
+<p>她希望听众最终记住的，是一个非常实用的思考方式：</p>
+
+<p><strong>每当你发现自己又在纠正 Agent、介入 Agent 的工作时，不要只解决眼前这个错误，而要问：在建立信任的整个体系中，哪一层最值得改进，才能让 Agent 下次更值得信任？</strong></p>
+
+<p>她建议优先考虑以下方向：</p>
+
+<ol><li><strong>先改进代码库、架构、数据结构和算法</strong>，尽可能从设计上让坏模式无法发生；</li><li><strong>再完善静态分析</strong>，通过 Lint、编译器诊断和 CI 等机制及时发现问题；</li><li><strong>再叠加 Rules、Bugbot 和 Skills</strong>，让 Agent 按照团队认可的方法工作；</li><li><strong>进一步利用 Skill 检查代码质量</strong>，而不仅仅确认功能是否能够运行。</li></ol>
+
+<p>当这些工作逐步完成，团队就能建立一个足够可信的环境，让 Agent 不必每一步都等待人类批准或纠正，而可以更自主地开展工作。</p>
+
+<p>Lauren 也坦言，自己在 Grok Bot 代码库上花了大量时间做这些事情。这就是她所谓的“秘诀”——但严格来说，它并不是什么神奇技巧，而是大量、持续、细致的基础工作。</p>
+
+<p>她最后邀请听众在 X 上通过 <strong>poteto</strong>（注意拼写中带有字母 e）联系她，并祝大家都能搭建好自己的“米其林厨房”。</p>
+
+<hr>
+
+<h2>附录一：核心术语与技术概念速查</h2>
+
+<p>下面的解释用于帮助初学者理解本文。涉及具体工具的功能时，以分享原文明确提到的内容为准；如果讲者没有展开某个工具的实现细节，术语表也不会自行补充未经说明的产品功能。</p>
+
+<h3>A. Agent 与 AI 工作流</h3>
+
+<div class="tbl-wrap"><table><thead><tr><th scope="col">术语</th><th scope="col">英文全称 / 原词</th><th scope="col">通俗解释</th><th scope="col">在本文中的作用</th></tr></thead><tbody><tr><td>智能体</td><td>Agent</td><td>能够接收目标、理解任务，并调用工具执行多步骤工作的 AI 系统。可以把它理解为不只回答问题、还能够动手完成任务的 AI 助手。</td><td>负责写代码、运行应用、检查问题、调用工具和提交 PR。</td></tr><tr><td>子智能体</td><td>Sub-agent</td><td>为某个具体子任务单独启动的 Agent。</td><td>当任务规模扩大时，可以由多个 Agent 分担工作。</td></tr><tr><td>云端智能体</td><td>Cloud Agent</td><td>在云端环境中运行的 Agent。</td><td>可以被 Grok Bot 自动启动，承担具体开发或修复任务。</td></tr><tr><td>智能体技能</td><td>Agent Skill / Skill</td><td>为 Agent 准备的一套可复用工作方法，通常包含说明、工具和操作步骤。</td><td>让 Agent 学会调试、开发、验证或执行特定流程。</td></tr><tr><td>验证技能</td><td>Verification Skill</td><td>专门教 Agent 如何检查工作结果的 Skill。</td><td>让 Agent 启动应用、抓取数据、检查功能和性能。</td></tr><tr><td>工作规则</td><td>Rules</td><td>针对代码库或任务制定的明确要求。</td><td>引导 Agent 按照团队认可的规范完成工作。</td></tr><tr><td>物化记忆</td><td>Materialized Memory</td><td>将原本需要临时理解或记忆的信息，提前整理成可保存、可读取的结构化资料。</td><td>Feature Map 将应用功能和操作方式记录下来，方便 Agent 查询。</td></tr><tr><td>外环</td><td>Outer Loop</td><td>围绕开发工作运行的信息接入、事件监测和任务触发流程。</td><td>Grok Bot 连接 Slack、Datadog、Sentry 等服务，汇总信息并启动 Agent。</td></tr><tr><td>例行任务</td><td>Routines</td><td>按照预先设定的方式持续执行的自动化任务。</td><td>例如订阅 Slack 线程或 Sentry 告警，并在事件出现时启动后续工作。</td></tr><tr><td>自动化流程</td><td>Automations</td><td>把一系列操作配置成可以自动触发和执行的流程。</td><td>Cursor Automations 可以与 SDK、Bot 配合，复用已有 Agent 基础设施。</td></tr><tr><td>构建者</td><td>Builder</td><td>参与构建产品、功能或系统的人，不一定只指传统意义上的软件工程师。</td><td>Lauren 希望让每位工程师和 Builder 都能借助 Agent 提高产出。</td></tr><tr><td>AI 低质量提交</td><td>Slop PR</td><td>大量生成但缺乏实际价值、质量不过关的 AI 代码提交。</td><td>用来说明没有验证和约束时，增加 Agent 数量可能带来更多垃圾代码。</td></tr></tbody></table></div>
+
+<h3>B. 软件开发与代码协作</h3>
+
+<div class="tbl-wrap"><table><thead><tr><th scope="col">术语</th><th scope="col">英文全称 / 原词</th><th scope="col">通俗解释</th><th scope="col">在本文中的作用</th></tr></thead><tbody><tr><td>PR</td><td>Pull Request</td><td>拉取请求。开发者完成一组代码修改后，提交 PR，请求将这些改动合并到主代码库。</td><td>X 帖文/标题文案写的是 2,500；讲者在视频口播中说的是 2,000。两种口径需区分。</td></tr><tr><td>打荷 / 一线厨师</td><td>Line Cook</td><td>在厨房中负责具体烹饪工序的一线厨师。</td><td>Lauren 用厨房团队的岗位分工比喻 Agent 的任务分工。</td></tr><tr><td>主厨助理</td><td>Sous Chef</td><td>协助主厨管理厨房、协调出品和人员工作的岗位。</td><td>与打荷、洗碗工等岗位一起构成米其林厨房的类比。</td></tr><tr><td>生产环境</td><td>Production Environment</td><td>真正提供给用户使用的线上运行环境。</td><td>讲者强调的是把大量代码变更合入实际生产环境，而不只是本地写出代码。</td></tr><tr><td>代码库</td><td>Codebase</td><td>一个软件项目的代码、目录、配置及相关文件的整体集合。</td><td>Agent 会参考代码库已有的结构和模式继续编写代码。</td></tr><tr><td>代码评审</td><td>Code Review</td><td>在代码合并前，由人或工具检查代码变更是否合理、正确、符合规范。</td><td>讲者认为不能只依赖人工评审来保证质量。</td></tr><tr><td>代码风格指南</td><td>Style Guide</td><td>规定代码命名、排版、组织方式和风格偏好的规范文档。</td><td>如果规范只写在文档中，往往仍需要人类在 Code Review 中执行。</td></tr><tr><td>技术债</td><td>Technical Debt / Tech Debt</td><td>为了短期交付而留下的设计缺陷、临时方案或维护成本，未来可能增加修改难度。</td><td>Dune 的原则之一是清理技术债，防止 Agent 复制和扩散。</td></tr><tr><td>反模式</td><td>Anti-pattern</td><td>看起来能解决问题，但长期来看容易造成维护、性能或结构问题的做法。</td><td>Agent 可能模仿代码库中的反模式，因此需要及时清理。</td></tr><tr><td>权宜方案</td><td>Workaround</td><td>暂时绕开问题的办法，不一定真正解决根本原因。</td><td>一个 Workaround 可能被 Agent 复制，最后扩散成普遍写法。</td></tr><tr><td>铺好的路</td><td>Paved Path</td><td>团队为常见开发任务设计好的标准做法和实现路径。</td><td>让 Agent 不需要猜测，沿着最容易的路径就能做出正确实现。</td></tr><tr><td>最受认可的模式</td><td>Blessed Patterns</td><td>团队认可、希望大家持续采用的标准实现模式。</td><td>Dune 通过 Paved Path 让 Agent 更容易采用这些模式。</td></tr><tr><td>信任图谱</td><td>Trust Graph</td><td>分享中用来描述建立 Agent 信任所需环节的整体结构。</td><td>每次纠正 Agent 时，都可以反过来思考应改进其中哪一环。</td></tr><tr><td>共置</td><td>Co-location</td><td>把属于同一功能或模块的相关代码放在相邻或统一的位置。</td><td>Dune 将同一个 Feature 的代码放在同一个文件夹中。</td></tr><tr><td>依赖关系图</td><td>Dependency Graph</td><td>表示不同模块或文件之间引用、依赖关系的图。</td><td>Dune 用它约束模块之间的导入，防止不合适的代码进入渲染侧。</td></tr><tr><td>代码注释</td><td>Comments</td><td>写在代码中的说明文字，用来解释实现、边界情况或特殊处理。</td><td>Lauren 的团队发现 Agent 可能把注释当作继续使用临时方案的理由，因此在 Dune 中选择禁用。</td></tr></tbody></table></div>
+
+<h3>C. 测试、验证与性能分析</h3>
+
+<div class="tbl-wrap"><table><thead><tr><th scope="col">术语</th><th scope="col">英文全称 / 原词</th><th scope="col">通俗解释</th><th scope="col">在本文中的作用</th></tr></thead><tbody><tr><td>验证</td><td>Verification</td><td>用实际检查或证据确认程序是否满足要求，而不只是相信开发者的描述。</td><td>是建立 Agent 信任的第一个重要基础。</td></tr><tr><td>正确性</td><td>Correctness</td><td>程序是否实现了预期行为，结果是否符合要求。</td><td>例如结账按钮是否真的完成结账。</td></tr><tr><td>形式化验证</td><td>Formal Verification</td><td>用数学化、可严格推导的方法证明程序满足特定性质。</td><td>是比常规自动化检查更高阶、也更难实现的验证方式。</td></tr><tr><td>不变量</td><td>Invariant</td><td>在系统运行或状态变化过程中，必须始终成立的条件或规则。</td><td>形式化验证可以用于核对业务层不变量是否始终成立。</td></tr><tr><td>Chrome 开发者工具</td><td>Chrome DevTools</td><td>用于检查和调试 Chrome 页面或应用的开发工具。</td><td>Lauren 最初用它手工查看应用性能。</td></tr><tr><td>Chrome 开发者工具协议</td><td>Chrome DevTools Protocol / CDP</td><td>让外部程序通过协议控制或检查 Chrome 的接口。</td><td>Control Glass 借助它让 Agent 自动启动、控制和分析应用。</td></tr><tr><td>性能追踪</td><td>Performance Trace</td><td>记录程序运行过程中发生的性能活动和时间信息。</td><td>用于分析应用哪里耗时、哪里可能成为性能瓶颈。</td></tr><tr><td>堆快照</td><td>Heap Snapshot</td><td>某一时刻程序内存堆的记录，可供分析内存占用情况。</td><td>Lauren 用它检查应用的内存表现。</td></tr><tr><td>性能热点</td><td>Performance Hotspot</td><td>程序中消耗时间或资源较多、值得优先优化的位置。</td><td>Agent 分析 Trace 后，可以定位热点并尝试优化。</td></tr><tr><td>性能回退</td><td>Performance Regression</td><td>新代码引入后，应用性能比原来变差。</td><td>大量 PR 快速进入时，团队难以人工确认是否出现性能回退。</td></tr><tr><td>回归问题</td><td>Regression</td><td>原本正常的功能或表现，在代码变更后再次出现问题。</td><td>不受控制地扩大 Agent 数量，可能引入大量回归问题。</td></tr><tr><td>遥测</td><td>Telemetry</td><td>软件运行过程中收集到的状态、性能或行为数据。</td><td>验证流程可以帮助团队收集真实运行指标和统计数据。</td></tr><tr><td>持续集成</td><td>Continuous Integration / CI</td><td>代码变更后自动运行构建、测试和检查流程。</td><td>用自动化方式执行团队的工程约束。</td></tr><tr><td>静态分析</td><td>Static Analysis</td><td>不实际运行程序，而是检查代码结构、语法或规则来发现问题。</td><td>与 Linter、编译器诊断一起，提前拦截不符合要求的代码。</td></tr><tr><td>代码检查工具</td><td>Linter</td><td>自动检查代码是否违反约定规则或存在某些常见问题的工具。</td><td>可以用来阻止 Agent 重复写出不符合要求的代码。</td></tr><tr><td>代码检查规则</td><td>Lint Rule</td><td>Linter 用来判断代码是否合规的一条具体规则。</td><td>一发现坏模式，就可以增加规则，先阻止问题继续扩散。</td></tr></tbody></table></div>
+
+<h3>D. 架构、运行环境与性能概念</h3>
+
+<div class="tbl-wrap"><table><thead><tr><th scope="col">术语</th><th scope="col">英文全称 / 原词</th><th scope="col">通俗解释</th><th scope="col">在本文中的作用</th></tr></thead><tbody><tr><td>架构</td><td>Architecture</td><td>软件系统的整体组织方式，以及模块之间如何分工和协作。</td><td>通过架构约束，让 Agent 更容易采用正确实现。</td></tr><tr><td>框架</td><td>Framework</td><td>一套预先设计好的结构、规则和工具，开发者可以在其基础上构建应用。</td><td>Dune 是为 Grok Bot 建立的 Agent-friendly Framework。</td></tr><tr><td>大语言模型</td><td>Large Language Model / LLM</td><td>能理解和生成语言、代码等内容的 AI 模型。</td><td>Agent 会参考上下文窗口中的代码和信息来生成后续实现。</td></tr><tr><td>上下文窗口</td><td>Context Window</td><td>模型在一次任务中能够参考的信息范围。</td><td>Agent 能看到的代码和资料会影响它采用什么模式。</td></tr><tr><td>命令行工具</td><td>Command-Line Interface / CLI</td><td>通过输入命令执行操作的工具或界面。</td><td>让 Agent 用固定、可复现的方式启动应用和收集数据。</td></tr><tr><td>功能地图</td><td>Feature Map</td><td>描述应用功能、功能位置及用户操作路径的结构化资料。</td><td>帮助 Agent 理解用户反馈对应的功能，而不是仅凭截图猜测。</td></tr><tr><td>站点地图</td><td>Sitemap</td><td>展示网站页面或层级结构的地图。</td><td>Feature Map 的概念灵感之一。</td></tr><tr><td>DOM</td><td>Document Object Model</td><td>文档对象模型。可以粗略理解为网页或界面元素在程序中的结构化表示。</td><td>Feature Map 可以记录用户需要点击哪些 DOM 元素才能进入某项功能。</td></tr><tr><td>电子应用主进程</td><td>Electron Main Process</td><td>在 Electron 应用中承担主进程职责的运行部分。</td><td>Dune 对主进程与渲染侧的代码设置了隔离边界。</td></tr><tr><td>渲染进程/线程</td><td>Renderer Process / Renderer Thread</td><td>负责界面显示和渲染工作的运行部分。</td><td>不应被不适合的长任务拖慢，否则会影响 UI 流畅度。</td></tr><tr><td>帧率</td><td>Frames Per Second / FPS</td><td>每秒显示多少帧画面。数值越高，通常意味着画面更新越频繁。</td><td>分享以 60 FPS 和 120 FPS 说明每帧大约只有 16ms 或 8ms 的时间预算。</td></tr><tr><td>单帧预算</td><td>Frame Budget</td><td>完成一帧界面更新可以使用的时间。</td><td>渲染侧不能被长任务长时间占用，需要把工作拆成较小任务。</td></tr><tr><td>软件开发工具包</td><td>Software Development Kit / SDK</td><td>一组供开发者调用的工具、接口和代码，用于构建应用或扩展能力。</td><td>Cursor SDK 可以用于搭建额外 Bot，并复用 Agent 基础设施。</td></tr></tbody></table></div>
+
+<h3>E. 分享中出现的工具和项目名称</h3>
+
+<div class="tbl-wrap"><table><thead><tr><th scope="col">名称</th><th scope="col">本文中的定位</th><th scope="col">原文说明范围</th></tr></thead><tbody><tr><td>Cursor</td><td>Lauren 曾加入并参与相关开发工作的产品/团队环境。</td><td>分享重点涉及 Cursor IDE、Agents Window、Automations 和 SDK。</td></tr><tr><td>Agents Window</td><td>Cursor 当时正在开发的智能体窗口形态。</td><td>Lauren 加入时该产品存在性能问题，是她开始做验证 Skill 的背景。</td></tr><tr><td>Control Glass</td><td>Lauren 开发的第一个控制/验证类 Skill。</td><td>用于指导 Agent 启动应用、抓取 Trace，并通过 Chrome DevTools Protocol 完成检查。</td></tr><tr><td>P-Stack</td><td>Lauren 制作的插件。</td><td>包含来自工程实践的工作流、Playbook 和 Skills；讲者没有展开具体实现。</td></tr><tr><td>Dune</td><td>为驱动 Grok Bot 建立的 Agent-friendly Framework。</td><td>通过代码组织、模块边界和严格约定，让 Agent 更容易采用正确模式。</td></tr><tr><td>Grok Bot</td><td>Lauren 在 xAI 参与的机器人/Agent 系统。</td><td>擅长连接外部服务、聚合信息、响应事件并启动 Cloud Agent。</td></tr><tr><td>Bugbot</td><td>讲者提到的工具。</td><td>原文没有进一步展开其具体功能。</td></tr><tr><td>Lean、TLA+</td><td>分享中提到的形式化方法相关语言/工具。</td><td>用作更高阶形式化验证方向的例子。</td></tr><tr><td>Slack</td><td>团队消息和协作服务。</td><td>用于接收用户反馈、订阅讨论线程和触发任务。</td></tr><tr><td>Datadog</td><td>团队连接的外部服务之一。</td><td>讲者将其作为可接入的信息来源举例。</td></tr><tr><td>Sentry</td><td>团队连接的外部服务之一。</td><td>用于接收错误或异常告警，并可成为自动化任务的触发来源。</td></tr><tr><td>PlanetScale</td><td>团队连接的外部服务之一。</td><td>讲者将其作为可接入的服务举例。</td></tr></tbody></table></div>
+
+<hr>
+
+<h2>附录二：建议怎样理解这场分享</h2>
+
+<p>如果你是软件开发初学者，可以按下面这条逻辑理解整场内容：</p>
+
+<ol><li><strong>Agent 能写代码，不代表它写的代码可靠。</strong> 如果没有检查机制，Agent 数量越多，产生的低质量代码和错误也可能越多。</li><li><strong>先让 Agent 能够自己验证。</strong> 让它实际启动应用、运行测试、收集性能数据，而不是只根据代码推测结果。</li><li><strong>再把资深工程师的经验变成可复用能力。</strong> 将调试、开发和质量要求写进 Skills、Playbooks 和 Rules。</li><li><strong>不要只靠文字提醒 Agent。</strong> 还要改造代码库、架构和自动化检查，让错误更难发生。</li><li><strong>持续维护代码库。</strong> Agent 会模仿已有模式，因此必须及时清理技术债、Workaround 和反模式。</li><li><strong>把外部事件接入自动化流程。</strong> 让系统能够发现问题、启动 Agent、自动处理任务，并在必要时创建 PR。</li></ol>
+
+<p>这场分享最值得记住的并不是“一个人一个月合并了多少 PR”，而是背后的工程思想：</p>
+
+<p><strong>不要把所有精力都花在一次次纠正 Agent 上。要把每次纠正转化为代码库、工具、规则和工作流的改进，让下一次 Agent 更容易做对。</strong></p>
+
+<hr>
+
+<h2>原始转写附注</h2>
+
+<p>原始材料说明：英文分段 ASR 原文（含时间戳）另存于同目录，文件名为 <code>poteto-2500-prs-en-transcript.txt</code>，约 633 段、约 5,400 词。</p>

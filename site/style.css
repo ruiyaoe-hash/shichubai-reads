@@ -808,3 +808,49 @@ html[data-theme='dark'] .cont-thumb img.cv-light { display: none; }
 html[data-theme='dark'] .thumb img.cv-dark,
 html[data-theme='dark'] .hero-media img.cv-dark,
 html[data-theme='dark'] .cont-thumb img.cv-dark { display: block; }
+
+/* =========================================================
+   第贰期起：整理译文的结构件（卷首说明 / 术语表 / 层级标题 / 时间戳）
+   ========================================================= */
+.zh-article .doc-meta {
+  margin: 0 0 2.8em; padding: 1.15em 1.4em 1.05em;
+  border-left: 2px solid var(--line-strong); background: var(--zh-soft);
+  font-size: .86em; line-height: 1.85; color: var(--text-soft);
+}
+.zh-article .doc-meta p { margin: 0 0 .65em; }
+.zh-article .doc-meta ul, .zh-article .doc-meta ol {
+  margin: 0; padding: 0; border: 0; list-style: none;
+}
+.zh-article .doc-meta li { padding: .1em 0; border: 0; }
+.zh-article .doc-meta li::before { display: none; }
+.zh-article .doc-meta a { word-break: break-all; }
+.zh-article .sec-time {
+  display: block; margin-top: .5em; font: 400 .56em/1.4 var(--font-ui);
+  letter-spacing: .1em; color: var(--text-faint);
+}
+.zh-article h4 { font-family: var(--font-display); font-weight: 600; font-size: 1em; line-height: 1.6; margin: 1.7em 0 .6em; color: var(--text-soft); scroll-margin-top: 76px; }
+.zh-article h5 { font: 500 .92em/1.6 var(--font-ui); letter-spacing: .04em; margin: 1.4em 0 .5em; color: var(--muted); }
+.zh-article code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .88em;
+  padding: .1em .35em; border-radius: 3px; background: var(--zh-soft);
+  color: var(--accent); word-break: break-all;
+}
+.tbl-wrap { overflow-x: auto; margin: 1.6em 0 2em; -webkit-overflow-scrolling: touch; }
+.zh-article table { width: 100%; min-width: 580px; border-collapse: collapse; font-size: .84em; line-height: 1.7; }
+.zh-article th, .zh-article td { text-align: left; vertical-align: top; padding: .7em .9em; border-bottom: 1px solid var(--line); }
+.zh-article thead th { font-weight: 600; color: var(--muted); font-size: .92em; letter-spacing: .06em; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.zh-article tbody tr:hover { background: var(--zh-soft); }
+.zh-article th:first-child, .zh-article td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; width: 1%; padding-right: 1.3em; }
+/* 长目录可滚动，不把侧栏撑破视口 */
+.ep-toc { max-height: calc(100vh - 140px); overflow-y: auto; }
+
+/* 方案 B 下往期可能只有一张卡：改为横向宽卡，避免右侧整片空白。
+   :has() 不被支持时自动回退为原来的小卡网格，不影响可用性。 */
+@media (min-width: 900px) {
+  .grid:has(> .card:only-child) { grid-template-columns: minmax(0, 1fr); }
+  .grid:has(> .card:only-child) .card { flex-direction: row; align-items: center; gap: 32px; }
+  .grid:has(> .card:only-child) .thumb { flex: 0 0 44%; width: 44%; }
+  .grid:has(> .card:only-child) .card-body { flex: 1; padding-top: 0; }
+  .grid:has(> .card:only-child) .card-title { font-size: 20px; }
+  .grid:has(> .card:only-child) .card-title-en { font-size: 14px; }
+}

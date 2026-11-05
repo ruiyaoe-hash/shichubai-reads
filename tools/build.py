@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""时初白精读 · 静态站构建器。
+"""初白de小岛 · 静态站构建器。
 
 壳层来自 https://github.com/joeseesun/lexfridman-cn （MIT，仅代码）。
 只使用 Python 标准库。
@@ -61,6 +61,24 @@ SITE_NAME = '初白de小岛'
 SITE_SUB = '中文精读 · 按时间往下读'
 IP_NAME = '时初白'
 TAGLINE = '在你想放弃时，把火递回来。'
+
+CN_DIGITS = '零壹贰叁肆伍陆柒捌玖'
+
+
+def cn_num(n):
+    """全站统一的期号字形：1→壹、2→贰…99→玖拾玖。"""
+    if not isinstance(n, int) or not 1 <= n <= 99:
+        return str(n) if n is not None else ''
+    if n < 10:
+        return CN_DIGITS[n]
+    tens, ones = divmod(n, 10)
+    head = (CN_DIGITS[tens] + '拾') if tens > 1 else '拾'
+    return head + (CN_DIGITS[ones] if ones else '')
+
+
+def ep_label(n):
+    """展示用期号：第壹期 / 第贰期；无编号时为特别篇。"""
+    return f'第{cn_num(n)}期' if isinstance(n, int) and n > 0 else '特别篇'
 
 
 def sp(path):
@@ -223,7 +241,7 @@ def site_footer():
     </div>
     <div class="ft-bottom">
       <span>© 2026 {SITE_NAME} · {IP_NAME}</span>
-      <span>本站不托管访谈音视频；精读是依据公开材料写的评论，完整对谈请以各期官方渠道为准。</span>
+      <span>本站不托管访谈音视频；中文内容依据已公开材料整理与评述，完整内容请以各期官方渠道为准。</span>
     </div>
   </div>
 </footer>"""
@@ -397,9 +415,24 @@ def prune(o):
     return o
 
 
+def table_to_md(m):
+    # 正文里的术语表转成 Markdown 表格，供 index.md 与 llms 使用。
+    rows = re.findall(r'<tr>(.*?)</tr>', m.group(1), flags=re.S)
+    out = []
+    for i, row in enumerate(rows):
+        cells = [re.sub(r'<[^>]+>', '', c).strip().replace('|', r'\|')
+                 for c in re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', row, flags=re.S)]
+        out.append('| ' + ' | '.join(cells) + ' |')
+        if i == 0:
+            out.append('|' + '---|' * len(cells))
+    return '\n\n' + '\n'.join(out) + '\n\n'
+
+
 def html_to_md(h):
     h = re.sub(r'\s*<h2[^>]*>(.*?)</h2>\s*', lambda m: f'\n\n## {m.group(1)}\n\n', h, flags=re.S)
     h = re.sub(r'\s*<h3[^>]*>(.*?)</h3>\s*', lambda m: f'\n\n### {m.group(1)}\n\n', h, flags=re.S)
+    h = re.sub(r'\s*<h4[^>]*>(.*?)</h4>\s*', lambda m: f'\n\n#### {m.group(1)}\n\n', h, flags=re.S)
+    h = re.sub(r'\s*<h5[^>]*>(.*?)</h5>\s*', lambda m: f'\n\n##### {m.group(1)}\n\n', h, flags=re.S)
     h = re.sub(r'\s*<blockquote>(.*?)</blockquote>\s*',
                lambda m: '\n\n' + '\n'.join('> ' + ln for ln in re.sub(r'</?p>', '\n', m.group(1)).strip().splitlines() if ln.strip()) + '\n\n',
                h, flags=re.S)
@@ -407,6 +440,9 @@ def html_to_md(h):
     h = re.sub(r'</?(ul|ol)>', '\n', h)
     h = re.sub(r'<(strong|b)>(.*?)</\1>', r'**\2**', h, flags=re.S)
     h = re.sub(r'<(em|i)>(.*?)</\1>', r'*\2*', h, flags=re.S)
+    h = re.sub(r'<div class="tbl-wrap"><table>(.*?)</table></div>', table_to_md, h, flags=re.S)
+    h = re.sub(r'<code>(.*?)</code>', r'`\1`', h, flags=re.S)
+    h = re.sub(r'<hr\s*/?>', '\n\n---\n\n', h)
     h = re.sub(r'<br\s*/?>', '  \n', h)
     h = re.sub(r'\s*<p>(.*?)</p>\s*', lambda m: f'\n\n{m.group(1).strip()}\n\n', h, flags=re.S)
     h = H.unescape(re.sub(r'<[^>]+>', '', h))
@@ -452,7 +488,7 @@ def build_page(i, eps):
     x = eps[i]
     url = absu(f'/ep/{slug}/')
     plain = strip_no(zh_title) or strip_no(title) or title
-    title_tag = f'{plain} | {SITE_NAME}' + (f' · 第 {num} 期' if num else '')
+    title_tag = f'{plain} | {SITE_NAME}' + (f' · {ep_label(num)}' if num else '')
     desc = lede or f'{guest or SITE_NAME}：{plain}'
     og_title = plain
     og_img = absu(x['cv']) if x.get('cv') else absu('/icon-512.png')
@@ -476,7 +512,7 @@ def build_page(i, eps):
          "isBasedOn": {"@type": "Conversation", "name": e.get('sourceLabel') or plain,
                        "url": e.get('sourceUrl') or None,
                        "creator": {"@type": "Organization", "name": e.get('rightsHolder') or '未标注'},
-                       "description": "公开访谈。本页只做评论与外链，不复制、不嵌入、不托管音视频。"}},
+                       "description": "已公开的内容。本页只做中文整理与外链，不复制、不嵌入、不托管音视频。"}},
         {"@type": "Organization", "@id": f'{DOMAIN}/#org', "name": SITE_NAME, "url": absu('/'),
          "slogan": TAGLINE},
         {"@type": "BreadcrumbList", "itemListElement": [
@@ -487,7 +523,7 @@ def build_page(i, eps):
 
     h1 = H.escape(plain)
     orig_line = f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>' if zh_title else ''
-    kicker_bits = [f'第 {num} 期' if num else '特别篇']
+    kicker_bits = [ep_label(num)]
     if has_zh:
         kicker_bits.append('<span class="k-zh">中文精读</span>')
     kicker = '<span class="k-sep">·</span>'.join(kicker_bits)
@@ -508,7 +544,7 @@ def build_page(i, eps):
     if primary:
         media_html = (
             '<p class="ep-source"><a href="' + H.escape(primary['url']) + '" '
-            'target="_blank" rel="noopener noreferrer">去官方看完整对谈 <span aria-hidden="true">↗</span></a>'
+            'target="_blank" rel="noopener noreferrer">去官方看完整内容 <span aria-hidden="true">↗</span></a>'
             '<span class="ep-source-note">原片在发布方平台，本站不托管</span></p>')
     else:
         media_html = ''
@@ -544,7 +580,7 @@ def build_page(i, eps):
     for rep_ in e.get('reports') or []:
         if rep_.get('url'):
             res.append(f'<li><span class="res-k">报道</span><a href="{H.escape(rep_["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(rep_.get("label") or rep_["url"])}</a></li>')
-    res.append('</ul><p class="res-note">精读是本站依据公开材料写的评论，不是官方文稿或逐字稿。'
+    res.append('</ul><p class="res-note">本站内容依据已公开材料整理与评述，不是官方文稿、不是逐字稿，也未经讲者或发布方审阅。'
                f'<a href="{sp("/disclaimer/")}">版权与说明</a></p></section>')
     resources = ''.join(res)
 
@@ -552,7 +588,7 @@ def build_page(i, eps):
         if not ne:
             return '<span></span>'
         t = ne['zh'] or ne['t']
-        txt = f'#{ne["n"]} {strip_no(t)}' if ne.get('n') else strip_no(t)
+        txt = f'{cn_num(ne["n"])} · {strip_no(t)}' if ne.get('n') else strip_no(t)
         rel = 'prev' if label.startswith('←') else 'next'
         return (f'<a href="{sp("/ep/" + ne["s"] + "/")}" rel="{rel}">'
                 f'<span class="pn-k">{label}</span><span class="pn-t">{H.escape(txt)}</span></a>')
@@ -583,11 +619,11 @@ def build_page(i, eps):
     md = dest.parent / 'index.md'
     if has_zh:
         head = [f'# {plain}', '', f'> {lede or ""}', '',
-                f'- 英文题：{title}', f'- 期数：第 {num} 期' if num else '- 期数：特别篇',
+                f'- 英文题：{title}', f'- 期数：{ep_label(num)}',
                 f'- 日期：{d}' if d else '', f'- 嘉宾：{guest}' if guest else '',
                 f'- 来源：{e.get("sourceLabel") or ""}', f'- 网页：{url}',
                 f'- 约 {zh_chars} 字（阅读约 {read_min} 分钟）', '',
-                '> 时初白精读的评论，依据公开访谈及主办方公开报道写成，非官方授权文稿。引用请链到网页版，并以上面的官方出处为准。', '']
+                f'> {SITE_NAME} 的中文整理与评述，依据已公开材料写成，非官方授权文稿；原话与完整语境以官方渠道为准。引用请链到网页版。', '']
         md.write_text('\n'.join(head) + '\n' + html_to_md(zh_raw))
     elif md.exists():
         md.unlink()
@@ -595,7 +631,7 @@ def build_page(i, eps):
 
 def ssr_card(x):
     zh, en = strip_no(x['zh']) or strip_no(x['t']), strip_no(x['t'])
-    num = f'第 {x["n"]} 期' if x['n'] is not None else '特别篇'
+    num = ep_label(x['n'])
     dt = (x['d'] or '')[:7].replace('-', '.')
     tag = '<span class="zh-tag">中文精读</span>' if x.get('r') else ''
     en_html = f'<div class="card-title-en" lang="en">{H.escape(en)}</div>' if x.get('zh') else ''
@@ -608,7 +644,7 @@ def ssr_hero(x):
     zh, en = strip_no(x['zh']) or strip_no(x['t']), strip_no(x['t'])
     d = x['d'] or ''
     when = fmt_date(d)
-    by = ' · '.join(H.escape(v) for v in [x.get('guest'), when, f'第 {x["n"]} 期' if x['n'] is not None else ''] if v)
+    by = ' · '.join(H.escape(v) for v in [x.get('guest'), when, ep_label(x['n']) if x['n'] is not None else ''] if v)
     desc = f'<p class="hero-desc">{H.escape(x["ds"])}</p>' if x.get('ds') else ''
     href = sp(f'/ep/{x["s"]}/')
     return (f'<a class="hero-media" href="{href}" tabindex="-1" aria-hidden="true">{thumb_img(x, hero=True)}</a>'
@@ -639,12 +675,16 @@ def sync_index(eps):
          "itemListElement": [{"@type": "ListItem", "position": k + 1, "url": absu(f'/ep/{x["s"]}/'),
                               "name": strip_no(x['zh']) or x['t']} for k, x in enumerate(eps[:30])]},
     ]}
+    # 方案 B：hero 是「最新精读」门面，网格从第二期开始排，消除上下重复。
+    # 单期时网格本就隐藏，这里保持同样条件以免 SSR 与运行时不一致。
+    grid_eps = [x for x in eps[:30]
+                if not (len(eps) > 1 and latest and x['s'] == latest['s'])]
     blocks = {
         'head': f'{THEME_SCRIPT}\n{head_extra()}',
         'ld': '<script type="application/ld+json">' + json.dumps(prune(ld), ensure_ascii=False).replace('<', '\\u003c') + '</script>',
         'sub': sub,
         'hero': ssr_hero(latest) if latest else '',
-        'grid': ''.join(ssr_card(x) for x in eps[:30]),
+        'grid': ''.join(ssr_card(x) for x in grid_eps),
         'footer': site_footer(),
     }
     for k, v in blocks.items():
@@ -724,22 +764,25 @@ def build_disclaimer():
 
       <h2>一、不托管音视频</h2>
       <p>本站不保存、不复制、不上传、不内嵌、不分发任何访谈视频或音频文件：仓库、Pages 站点与 RSS 中都没有原片文件，也没有指向原片文件的直链。各期只提供<strong>指向权利人自行发布页面</strong>的普通外链（平台内的官方入口、主办方公开发布的图文）。内容的访问、播放与数据都发生在原平台。</p>
-      <p>第 001 期的权利人是抖音精选「创作阶梯计划」、@陈鲁豫 与 @姜乘澜。嘉宾官方主页明确标注「全网同名，只此一号，没有小号。暂未授权切片。」在权利人未开放音频直链或官方嵌入、且已明确表示未授权切片的情形下，本站不提供站内播放器，也不以任何形式转载原片。早期版本曾把整段访谈音频上传到 Release 并在页内播放，该做法已撤销。</p>
+      <p>第壹期的权利人是抖音精选「创作阶梯计划」、@陈鲁豫 与 @姜乘澜。嘉宾官方主页明确标注「全网同名，只此一号，没有小号。暂未授权切片。」在权利人未开放音频直链或官方嵌入、且已明确表示未授权切片的情形下，本站不提供站内播放器，也不以任何形式转载原片。早期版本曾把整段访谈音频上传到 Release 并在页内播放，该做法已撤销。</p>
+      <p>第贰期的原视频由 Lauren（X：@poteto）本人于 X 公开发布，约 38 分钟。本站只提供指向该公开帖文的普通外链，不保存、不转存视频文件。该期正文末尾附注提到的英文 ASR 原文另存文件<strong>不在本仓库、也不随站点发布</strong>，站内没有任何逐字稿文件。</p>
 
       <h2>二、外链的边界</h2>
       <p>外链只是索引，不等于获得授权，也不把第三方内容变成本站内容。本站不绕过平台的登录、付费或地域限制，不抓取、不缓存、不改写被链页面，不使用对方的名称、标识或节目包装来暗示合作。被链页面若下线或变更，本站不承担其内容可用性，也不对其中的广告、评论或信息收集负责。</p>
 
-      <h2>三、中文精读的性质</h2>
-      <p>「中文精读」是本站撰写的评论与介绍，依据已经公开的访谈，以及主办方、媒体的公开报道，不是官方文稿，不是逐字稿，也不是逐句翻译，未经嘉宾或制作方审阅。引用限于评论所必需的范围并尽量标注出处；可能有理解偏差、压缩和遗漏。人名、数字、时间与原话一律以原访谈及权利人发布的内容为准，不把转述补写成当事人原话。</p>
+      <h2>三、中文内容的性质</h2>
+      <p>「中文精读」是本站在已公开内容基础上做的中文整理与评述，不是官方文稿，不是逐字稿，也未经讲者、嘉宾或制作方审阅。各期写法并不相同：第壹期依据公开访谈及主办方、媒体的公开报道写成，以介绍与评述为主；第贰期是通读公开视频分享后重新组织结构的中文整理译文，尽量保留讲者实际说出的内容、案例、工具名称、技术细节与关键数据，并附术语表。</p>
+      <p>第贰期的篇幅与还原度都高于评论体，接近整场分享的中文呈现，本站<strong>未取得复制、翻译、改编或传播授权</strong>。这是站点所有者在知悉上述边界后作出的选择，并如实记录于此：读者若需要原话、语气与完整语境，请以官方渠道的原视频为准；本站不以任何形态替代原作，也不把转述补写成当事人原话。人名、数字、时间一律以原发布内容为准，可能存在理解偏差、压缩与遗漏。</p>
 
       <h2>四、封面、姓名与商标</h2>
-      <p>封面为本站自制的纯文字排版，不使用节目画面、剧照、嘉宾肖像或平台标识。文中出现的姓名、账号名、节目与计划名称仅用于指明评论对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
+      <p>封面为本站自制的文字与几何排版，不使用节目画面、视频帧、剧照、嘉宾肖像或平台标识。两期共用同一版式骨架，期号以汉字数字「壹 / 贰」呈现，与站内「第壹期 / 第贰期」一致。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
 
       <h2>五、代码与正文的许可</h2>
       <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
 
       <h2>六、更正与下架</h2>
       <p>权利人、嘉宾或其代理如认为某处引用、封面或链接不当，或希望撤下某一页，请在 <a href="https://github.com/ruiyaoe-hash/shichubai-reads/issues" target="_blank" rel="noopener noreferrer">仓库开 Issue</a>，说明具体页面与理由。核实后本站会更正、补充出处或删除该页及其构建产物，不要求对方先行提供争议证明。事实性错误同样欢迎指出。</p>
+      <p>第贰期因采用整理译文形态、还原度高于评论体，如讲者、其代理或发布平台提出异议，本站将直接撤下该页及其构建产物（页面、Markdown、RSS 条目、站点地图与目录），不以声明替代处理。</p>
 
     </div>
   </article>
@@ -749,7 +792,7 @@ def build_disclaimer():
     out.parent.mkdir(exist_ok=True)
     out.write_text(page_shell(
         f'版权、来源与内容说明 · {SITE_NAME}',
-        '非官方评论站点。不保存、不嵌入、不分发访谈音视频，只提供权利人自行发布页面的外链。中文精读是评论，不是官方文稿。',
+        '非官方中文精读站。不保存、不嵌入、不分发访谈音视频，只提供权利人自行发布页面的外链；中文内容不是官方文稿或逐字稿。',
         body, path='/disclaimer/'))
     print('disclaimer: ok')
 
@@ -767,7 +810,7 @@ def build_archive(eps):
             md = (x['d'] or '')[5:10].replace('-', '.')
             tag = '<span class="ar-zh">精读</span>' if x.get('r') else ''
             rows.append(
-                f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><span class="ar-n">{x["n"] if x["n"] is not None else "—"}</span>'
+                f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><span class="ar-n">{cn_num(x["n"]) if x["n"] is not None else "—"}</span>'
                 f'<span class="ar-t"><b>{H.escape(zh)}</b><i lang="en">{H.escape(strip_no(x["t"]))}</i></span>'
                 f'<span class="ar-d">{md}{tag}</span></a></li>')
         label = '年份未知' if y == '0000' else y
@@ -801,7 +844,7 @@ def build_sitemap(eps):
 
 def build_llms(eps):
     lines = [f'# {SITE_NAME}', '', f'> {TAGLINE}', '',
-             '中文精读是评论，不是官方文稿。本站不托管音视频，只提供官方页面外链。',
+             '中文内容依据已公开材料整理与评述，不是官方文稿或逐字稿。本站不托管音视频，只提供官方页面外链。',
              f'目录：{absu("/archive/")}', f'RSS：{absu("/feed.xml")}', '']
     for x in eps:
         if x['s'] in ZH:
@@ -830,15 +873,15 @@ def build_feed(eps):
         slug, num = x['s'], x['n']
         title = norm_zh(x['zh'] or x['t'])
         if not str(title).startswith('#'):
-            title = f'#{num} {strip_no(title)}'
+            title = f'#{cn_num(num)} {strip_no(title)}'
         url = absu(f'/ep/{slug}/')
         desc = (trans.get(slug) or {}).get('desc') or title
         zh_file = SITE / 'zh' / f'{slug}.html'
         body = ''
         if zh_file.exists():
             body = absolutize(zh_file.read_text()) + (
-                f'<hr><p>本文是{SITE_NAME}撰写的评论，不是官方文稿或逐字稿。'
-                f'完整对谈请到<a href="{url}">原文所列官方渠道</a>观看；本站不托管音视频。</p>')
+                f'<hr><p>本文由{SITE_NAME}依据已公开材料整理，不是官方文稿或逐字稿，也未经讲者或发布方审阅。'
+                f'完整内容请到<a href="{url}">原文所列官方渠道</a>观看；本站不托管音视频。</p>')
         pub = rfc822(x['d'])
         pub_tag = f'<pubDate>{pub}</pubDate>' if pub else ''
         content = f'<content:encoded><![CDATA[{cdata(body)}]]></content:encoded>' if body else ''
@@ -867,7 +910,7 @@ def build_feed(eps):
 def build_special(eps):
     picks = [x for x in eps if x.get('r')][:4]
     links = ''.join(
-        f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><b>{H.escape(strip_no(x["zh"]) or x["t"])}</b><i>第 {x["n"]} 期</i></a></li>'
+        f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><b>{H.escape(strip_no(x["zh"]) or x["t"])}</b><i>{ep_label(x["n"])}</i></a></li>'
         for x in picks)
     pages = {
         '404.html': ('页面不存在', '这一页没有找到', '链接可能写错了。回到首页，或从最新的精读读起。', True),
@@ -902,8 +945,8 @@ def build_meta_files():
         "start_url": sp('/') if sp('/') != '' else '/',
         "scope": sp('/') if sp('/').endswith('/') else sp('/') + '/',
         "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#ffffff",
+        "background_color": "#FBF7F0",
+        "theme_color": "#FBF7F0",
         "icons": icons or [{"src": sp('/icon.svg'), "sizes": "any", "type": "image/svg+xml"}],
     }
     if manifest['start_url'] == '/shichubai-reads':

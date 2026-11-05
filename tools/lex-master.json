@@ -1,5 +1,27 @@
 [
   {
+    "num": 2,
+    "title": "Building an AI Coding Environment You Can Trust",
+    "date": "2026-11-05",
+    "updated": "2026-11-05",
+    "slug": "002-poteto-2500-prs",
+    "sourceLabel": "X · @poteto 的公开视频分享",
+    "sourceUrl": "https://x.com/poteto/status/2102050467505430555",
+    "rightsHolder": "Lauren（X：@poteto）",
+    "rightsNotice": "原视频由讲者本人在 X 公开发布，本站未取得复制、翻译、改编或传播授权；仅提供指向该公开帖文的普通外链，不保存或转存视频文件。文末附注提到的英文 ASR 原文另存文件不在本仓库、不随站点发布。",
+    "officialLinks": [
+      {
+        "label": "X · @poteto 原视频分享",
+        "url": "https://x.com/poteto/status/2102050467505430555",
+        "kind": "primary",
+        "note": "讲者本人公开发布的约 38 分钟视频分享，完整内容在 X 平台内观看；本站不托管音视频。"
+      }
+    ],
+    "ytId": null,
+    "cover": "/covers/002-poteto-2500-prs.svg",
+    "reports": []
+  },
+  {
     "num": 1,
     "title": "Three Names, Three Acts",
     "date": "2026-10-30",

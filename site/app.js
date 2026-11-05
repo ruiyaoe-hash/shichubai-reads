@@ -72,6 +72,15 @@
   const PUNCT = /[\s·•・\-–—_'’"“”:：,，.。!！?？()（）\[\]【】#&/、|]+/g;
   const norm = (s) => (s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(PUNCT, '');
   const stripNum = (t) => (t || '').replace(/^#\d+\s*[–—:-]?\s*/, '');
+  // 期号字形与 build.py 的 cn_num / ep_label 保持一致：壹、贰、叁…
+  const CN = '零壹贰叁肆伍陆柒捌玖';
+  function cnNum(n) {
+    if (n == null || n < 1 || n > 99) return n == null ? '' : String(n);
+    if (n < 10) return CN[n];
+    const t = Math.floor(n / 10), o = n % 10;
+    return (t > 1 ? CN[t] + '拾' : '拾') + (o ? CN[o] : '');
+  }
+  const epLabel = (n) => n != null && n > 0 ? `第${cnNum(n)}期` : '特别篇';
 
   function indexEntry(e) {
     e._zh = stripNum(e.zh) || stripNum(e.t);
@@ -111,7 +120,9 @@
     const toks = tokens(state.q);
     const m = state.q.trim().match(/^#?(\d{1,3})$/);
     const numQ = m ? Number(m[1]) : null;
+    const heroSlug = (!state.q.trim() && state.f === 'all') ? (DATA.find((x) => x.r) || {}).s : null;
     let list = DATA.filter((e) => {
+      if (heroSlug && e.s === heroSlug) return false; // 方案 B：门面与列表不重复
       if (state.f === 'zh' && !e.r) return false;
       if (state.f === 'tr' && !e.tr) return false;
       if (state.f === 'hist' && !HIST[e.s]) return false;
@@ -159,7 +170,7 @@
 
   function cardHTML(e, toks) {
     const thumb = thumbHTML(e, 'card');
-    const num = e.n != null ? `第 ${e.n} 期` : '特别节目';
+    const num = e.n != null ? epLabel(e.n) : '特别节目';
     const date = e.d ? e.d.slice(0, 7).replace('-', '.') : '';
     const p = progressOf(e);
     const prog = p > 0.01 ? `<span class="prog" aria-hidden="true"><i style="width:${(p * 100).toFixed(1)}%"></i></span>` : '';
@@ -216,7 +227,7 @@
     if (filtered) {
       el.innerHTML = `<h2>${state.q.trim() ? '搜索结果' : label}<small>${LIST.length} 期${state.q.trim() ? `与「${esc(state.q.trim())}」相关` : ''}</small></h2>`;
     } else {
-      el.innerHTML = `<h2>全部单集<small>${state.sort === 'asc' ? '从第 1 期开始' : '最新在前'}</small></h2>`;
+      el.innerHTML = `<h2>往期<small>${LIST.length} 期 · ${state.sort === 'asc' ? '由旧到新' : '最新在前'}</small></h2>`;
     }
   }
 
@@ -271,7 +282,7 @@
     box.dataset.s = e.s;
     const d = e.d ? `${e.d.slice(0, 4)} 年 ${+e.d.slice(5, 7)} 月` : '';
     const img = thumbHTML(e, 'hero');
-    const by = [e.guest, d, e.n != null ? `第 ${e.n} 期` : ''].filter(Boolean).map(esc).join(' · ');
+    const by = [e.guest, d, e.n != null ? epLabel(e.n) : ''].filter(Boolean).map(esc).join(' · ');
     const href = site('/ep/' + e.s + '/');
     box.innerHTML = `<a class="hero-media" href="${href}" tabindex="-1" aria-hidden="true">${img}</a>
       <div class="hero-text">
@@ -374,7 +385,7 @@
     const b = $('#sort');
     b.dataset.dir = state.sort;
     b.querySelector('span').textContent = state.sort === 'asc' ? '最早' : '最新';
-    b.title = state.sort === 'asc' ? '当前：从第 1 期开始' : '当前：最新一期在前';
+    b.title = state.sort === 'asc' ? '当前：由旧到新' : '当前：最新在前';
   }
   function syncSearchBox() { input.parentNode.classList.toggle('has-q', !!input.value); }
 

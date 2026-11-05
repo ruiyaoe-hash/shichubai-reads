@@ -1,7 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
-  <desc>第 001 期自制封面：纯文字排版，不含访谈画面、剧照或人物肖像。暖纸 #F6EFE4，眉题 #8B7E6E，主标题 #3B3229。ViewBox 1280x720，与 og:image 声明一致。</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img">
+  <desc>第 001 期自制封面（日读版）：纯几何与文字排版，不含任何视频帧、节目画面、剧照、人物肖像或平台标识。右侧半圆为「岛」的抽象，圆内汉字「壹」是本站期号；两期共用同一版式骨架。ViewBox 1280x720，与 og:image 声明一致。</desc>
   <rect width="1280" height="720" fill="#F6EFE4"/>
-  <text x="640" y="150" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="26" fill="#8B7E6E">陈鲁豫 · 对谈 · 姜乘澜</text>
-  <text x="640" y="340" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="76" font-weight="600" fill="#3B3229">三个「名字」</text>
-  <text x="640" y="450" text-anchor="middle" font-family="Noto Serif CJK SC, Source Han Serif SC, Songti SC, serif" font-size="76" font-weight="600" fill="#3B3229">三幕人生</text>
+  <path d="M 760 470 A 250 250 0 0 1 1260 470 Z" fill="#A9684B" fill-opacity=".075"/>
+  <path d="M 760 470 A 250 250 0 0 1 1260 470" fill="none" stroke="#D6C7B4" stroke-width="1.2"/>
+  <path d="M 722 470 A 288 288 0 0 1 1298 470" fill="none" stroke="#A9684B" stroke-opacity=".15" stroke-width="1"/>
+  <path d="M 684 470 A 326 326 0 0 1 1336 470" fill="none" stroke="#A9684B" stroke-opacity=".15" stroke-width="1"/>
+  <line x1="726" y1="470" x2="1280" y2="470" stroke="#C4B39C" stroke-width="1"/>
+  <text x="1010" y="418" text-anchor="middle" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="212" fill="#A9684B">壹</text>
+  <line x1="88" y1="88" x2="1192" y2="88" stroke="#D6C7B4" stroke-width="1"/>
+  <text x="88" y="72" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="21" letter-spacing="3" fill="#8B7E6E">初白de小岛</text>
+  <text x="1192" y="72" text-anchor="end" font-family="Georgia,'Times New Roman',serif" font-size="19" letter-spacing="5" fill="#8B7E6E">NO. 001</text>
+  <rect x="1172" y="130" width="20" height="20" fill="#A9684B"/>
+  <text x="88" y="176" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="22" letter-spacing="7" fill="#A9684B">第壹期</text>
+  <text x="88" y="258" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="62" font-weight="600" fill="#3B3229">三个名字，</text>
+  <text x="88" y="344" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="62" font-weight="600" fill="#3B3229">三幕人生</text>
+  <text x="88" y="492" font-family="Georgia,'Times New Roman',serif" font-size="21" font-style="italic" letter-spacing=".6" fill="#8B7E6E">Three Names, Three Acts</text>
+  <line x1="88" y1="530" x2="168" y2="530" stroke="#A9684B" stroke-width="2"/>
+  <text x="88" y="575" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="23" fill="#3B3229">陈鲁豫 · 姜乘澜</text>
+  <line x1="88" y1="628" x2="1192" y2="628" stroke="#D6C7B4" stroke-width="1"/>
+  <text x="88" y="668" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="18" letter-spacing="2.5" fill="#8B7E6E">初白de小岛 · 中文精读</text>
+  <text x="1192" y="668" text-anchor="end" font-family="Georgia,'Times New Roman',serif" font-size="18" letter-spacing="2" fill="#8B7E6E">2026.10</text>
 </svg>
