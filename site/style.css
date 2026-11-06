@@ -157,12 +157,6 @@ svg { display: block; }
 .search-clear:hover { color: var(--text); }
 .search-box.has-q .search-kbd { display: none; }
 .search-box:not(.has-q) .search-clear { display: none; }
-.filters { display: flex; gap: 22px; }
-.filters button { background: none; border: 0; color: var(--muted); padding: 10px 0 8px; font-size: 13.5px; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; }
-.filters button:hover { color: var(--text); }
-.filters button.on { color: var(--text); font-weight: 600; border-bottom-color: var(--rule); }
-.filters button[hidden] { display: none; }
-.filters .n { color: var(--text-faint); font-weight: 400; margin-left: 5px; font-variant-numeric: tabular-nums; }
 .sort-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; color: var(--muted); padding: 8px 0; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
 .sort-btn:hover { color: var(--text); }
 .sort-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
@@ -575,7 +569,7 @@ body.mini-on #toTop { bottom: calc(88px + env(safe-area-inset-bottom, 0px) + var
 @media (max-width: 760px) {
   .toolbar-inner { flex-wrap: wrap; gap: 0 20px; }
   .search-box { flex-basis: 100%; border-bottom: 1px solid var(--line); }
-  .filters { flex: 1; gap: 20px; }
+  .sort-btn { margin-left: auto; } /* 筛选下线后，排序按钮靠右 */
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 18px; }
@@ -585,7 +579,7 @@ body.mini-on #toTop { bottom: calc(88px + env(safe-area-inset-bottom, 0px) + var
   .masthead .wrap::after { margin-top: 16px; }
   .mast-link { display: none; }
   #search { font-size: 16px; } /* 16px 防 iOS 聚焦缩放 */
-  .sort-btn span { display: none; }
+  /* 筛选区下线后，排序是工具栏唯一的操作，窄屏也必须带文字，不能只剩图标 */
   .hero { padding: 22px 0 30px; gap: 20px; }
   .hero-title { font-size: 25px; }
   .hero-desc { font-size: 15.5px; }
@@ -733,7 +727,6 @@ body { background: transparent; }
 
 /* 统一 8px 间距刻度与字号层级 */
 .toolbar-inner { gap: 16px; }
-.filters { gap: 16px; }
 .hero { gap: 40px; padding: 40px 0 48px; }
 .hero-title { font-size: clamp(23px, 2.5vw, 31px); }
 .hero-desc { font-size: 16px; line-height: 1.85; }
