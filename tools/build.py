@@ -56,11 +56,13 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 5, 5, 3
+CSS_V, APP_V, EP_V = 6, 5, 3
 SITE_NAME = '初白de小岛'
 SITE_SUB = '中文精读 · 按时间往下读'
 IP_NAME = '时初白'
-TAGLINE = '在你想放弃时，把火递回来。'
+# 全站唯一传播语。首页报头、页脚、JSON-LD、llms.txt 全部由这里注入，模板只留占位符。
+# 这句已定为固定对外表述，不要在模板或生成物里另写一份，也不要随手改写措辞。
+TAGLINE = '让阅读产生思想，让思想成为作品。'
 
 CN_DIGITS = '零壹贰叁肆伍陆柒捌玖'
 
@@ -683,6 +685,7 @@ def sync_index(eps):
         'head': f'{THEME_SCRIPT}\n{head_extra()}',
         'ld': '<script type="application/ld+json">' + json.dumps(prune(ld), ensure_ascii=False).replace('<', '\\u003c') + '</script>',
         'sub': sub,
+        'motto': H.escape(TAGLINE),
         'hero': ssr_hero(latest) if latest else '',
         'grid': ''.join(ssr_card(x) for x in grid_eps),
         'footer': site_footer(),
@@ -1019,6 +1022,10 @@ def assert_site():
     for name in ('app.js', 'ep.js'):
         if 'scb-fav' not in (SITE / name).read_text():
             raise SystemExit(name + ' is missing the favorites store')
+    # 传播语是固定对外表述：首页报头必须同时带着容器与 TAGLINE 原文。
+    idx = (SITE / 'index.html').read_text()
+    if 'class="mast-motto"' not in idx or H.escape(TAGLINE) not in idx:
+        raise SystemExit('site motto missing from homepage')
     print('checks: ok')
 
 
