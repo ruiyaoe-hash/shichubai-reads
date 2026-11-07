@@ -57,9 +57,9 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 6, 6, 3
+CSS_V, APP_V, EP_V = 7, 6, 3
 SITE_NAME = '初白de小岛'
-SITE_SUB = '中文精读 · 按时间往下读'
+SITE_SUB = '中文精读 · 精神小岛'
 IP_NAME = '时初白'
 # 全站唯一传播语。首页报头、页脚、JSON-LD、llms.txt 全部由这里注入，模板只留占位符。
 # 这句已定为固定对外表述，不要在模板或生成物里另写一份，也不要随手改写措辞。
@@ -232,7 +232,6 @@ def site_footer():
   <div class="wrap">
     <div class="ft-top">
       <a class="ft-mark" href="{home}">初白<span class="brand-de">de</span>小岛</a>
-      <p class="ft-tag">{TAGLINE}</p>
     </div>
     <div class="ft-cols">
       <nav class="ft-col" aria-label="浏览"><div class="ft-h">浏览</div>
@@ -244,7 +243,7 @@ def site_footer():
     </div>
     <div class="ft-bottom">
       <span>© 2026 {SITE_NAME} · {IP_NAME}</span>
-      <span>本站不托管访谈音视频；中文内容依据已公开材料整理与评述，完整内容请以各期官方渠道为准。</span>
+      <p class="ft-tag">{TAGLINE}</p>
     </div>
   </div>
 </footer>"""
@@ -669,8 +668,8 @@ def sync_index(eps):
     html = tpl.read_text() if tpl.exists() else f.read_text()
     latest = next((x for x in eps if x.get('r')), None)
     sub = SITE_SUB
-    title = f'{SITE_NAME} · 按时间读下去'
-    desc = f'{SITE_NAME} · {SITE_SUB}。按时间排列的中文精读。'
+    title = f'{SITE_NAME} · {SITE_SUB}'
+    desc = f'{SITE_NAME} · {SITE_SUB}。'
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "WebSite", "@id": f'{DOMAIN}/#website', "name": SITE_NAME, "url": absu('/'),
          "description": desc, "inLanguage": "zh-CN", "publisher": {"@id": f'{DOMAIN}/#org'},
@@ -768,7 +767,7 @@ def build_disclaimer():
   <article class="ep">
     <header class="ep-head"><div class="ep-kicker">关于本站</div><h1 class="ep-title">版权、来源与内容说明</h1></header>
     <div class="zh-article disclaimer-body">
-      <p>{SITE_NAME}是一个按时间排列的中文精读站，与访谈嘉宾、主持人、制作方、播出平台均无隶属、授权或合作关系。本站不是官方站点，也不代表他们的立场。</p>
+      <p>{SITE_NAME}是一处中文精读的独立记录，与访谈嘉宾、主持人、制作方、播出平台均无隶属、授权或合作关系。本站不是官方站点，也不代表他们的立场。</p>
 
       <h2>一、不托管音视频</h2>
       <p>本站不保存、不复制、不上传、不内嵌、不分发任何访谈视频或音频文件：仓库、Pages 站点与 RSS 中都没有原片文件，也没有指向原片文件的直链。各期只提供<strong>指向权利人自行发布页面</strong>的普通外链（平台内的官方入口、主办方公开发布的图文）。内容的访问、播放与数据都发生在原平台。</p>
@@ -828,7 +827,7 @@ def build_archive(eps):
     title = f'单集目录 · {SITE_NAME}'
     body = f"""<main class="wrap ar-main" id="main">
   <header class="ep-head"><div class="ep-kicker">单集目录</div><h1 class="ep-title">全部 {len(eps)} 期</h1>
-    <p class="ep-dek">按时间从新到旧排列。</p></header>
+    <p class="ep-dek">最新在前，逐期往回。</p></header>
   <nav class="ar-nav" aria-label="按年份跳转">{nav}</nav>
   {''.join(sec)}
 </main>"""

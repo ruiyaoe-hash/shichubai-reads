@@ -3,7 +3,7 @@
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页
    BASE 取脚本所在目录，项目页子路径与域名根路径都能用。 */
-const VERSION = 'scb-v6';  // 封面视觉返工（无硬边界版）：清掉旧封面的 staleWhileRevalidate 缓存
+const VERSION = 'scb-v7';  // 页脚改版 + 报头副标题改词：清掉旧的页面与样式缓存
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
