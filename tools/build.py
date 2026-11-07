@@ -11,7 +11,7 @@
   tools/index.template.html 首页模板（site/index.html 由此生成，不要直接改产物）
   site/zh/{slug}.html       中文精读正文片段
   site/data/zh-index.json   已有精读的 slug 列表
-  site/covers/              本站自制的文字封面（不得使用节目画面或人物肖像）
+  site/covers/              三期成套封面 SVG：左侧标题网格 + 右侧视频帧铅笔素描（内嵌 WebP data URI），日读 / 夜读各一张
 
 输出（发布根目录就是 site/）：
   site/index.html           由模板注入头条、卡片、页脚及站点绝对路径
@@ -56,7 +56,7 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 6, 5, 3
+CSS_V, APP_V, EP_V = 6, 6, 3
 SITE_NAME = '初白de小岛'
 SITE_SUB = '中文精读 · 按时间往下读'
 IP_NAME = '时初白'
@@ -524,7 +524,8 @@ def build_page(i, eps):
     ldjson = json.dumps(prune(ld), ensure_ascii=False).replace('<', '\\u003c')
 
     h1 = H.escape(plain)
-    orig_line = f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>' if zh_title else ''
+    # 没有英文原标题的中文节目不显示重复的一行；001/002 的英文原题照常显示。
+    orig_line = f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>' if zh_title and strip_no(title) != plain else ''
     kicker_bits = [ep_label(num)]
     if has_zh:
         kicker_bits.append('<span class="k-zh">中文精读</span>')
@@ -568,7 +569,8 @@ def build_page(i, eps):
         panel_tr = (f'<div class="tab-panel" id="panel-tr" data-panel="tr">'
                     f'<div class="tr-note">本地文字记录，仅在仓库提供纯文本时出现。</div>'
                     f'<div class="transcript-text">{H.escape(tr_text)}</div></div>')
-    no_tr_note = '' if (has_zh or tr_tag) else '<div class="ep-notice">这篇还没有正文。</div>'
+    # 正文由岛主自行撰写的期次，先把状态说清楚，不要显示成出错的空页。
+    no_tr_note = '' if (has_zh or tr_tag) else '<div class="ep-notice">本篇中文精读正在撰写中，完成后更新。完整内容请前往官方视频页观看。</div>'
 
     res = ['<section class="ep-resources"><div class="res-h">本集资源与出处</div><ul>']
     res.append(f'<li><span class="res-k">嘉宾</span>{H.escape(guest or "—")}</li>')
@@ -636,7 +638,8 @@ def ssr_card(x):
     num = ep_label(x['n'])
     dt = (x['d'] or '')[:7].replace('-', '.')
     tag = '<span class="zh-tag">中文精读</span>' if x.get('r') else ''
-    en_html = f'<div class="card-title-en" lang="en">{H.escape(en)}</div>' if x.get('zh') else ''
+    # 中文节目没有独立英文原题时，别把同一句中文再排一行当成「英文原题」
+    en_html = f'<div class="card-title-en" lang="en">{H.escape(en)}</div>' if x.get('zh') and en != zh else ''
     return (f'<a class="card" href="{sp("/ep/" + x["s"] + "/")}"><div class="thumb">{thumb_img(x)}</div><div class="card-body">'
             f'<div class="card-kicker"><span class="ep-n">{num}</span><span>{dt}</span>{tag}</div>'
             f'<div class="card-title">{H.escape(zh)}</div>{en_html}</div></a>')
@@ -648,11 +651,12 @@ def ssr_hero(x):
     when = fmt_date(d)
     by = ' · '.join(H.escape(v) for v in [x.get('guest'), when, ep_label(x['n']) if x['n'] is not None else ''] if v)
     desc = f'<p class="hero-desc">{H.escape(x["ds"])}</p>' if x.get('ds') else ''
+    en_line = f'<p class="hero-en" lang="en">{H.escape(en)}</p>' if x.get('zh') and en != zh else ''
     href = sp(f'/ep/{x["s"]}/')
     return (f'<a class="hero-media" href="{href}" tabindex="-1" aria-hidden="true">{thumb_img(x, hero=True)}</a>'
             f'<div class="hero-text"><div class="hero-kicker">最新精读</div>'
             f'<h2 class="hero-title"><a href="{href}">{H.escape(zh)}</a></h2>'
-            f'<p class="hero-en" lang="en">{H.escape(en)}</p>{desc}<p class="hero-by">{by}</p>'
+            f'{en_line}{desc}<p class="hero-by">{by}</p>'
             f'<a class="hero-cta" href="{href}">阅读全文<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>')
 
 
@@ -812,9 +816,11 @@ def build_archive(eps):
             zh = strip_no(x['zh']) or strip_no(x['t'])
             md = (x['d'] or '')[5:10].replace('-', '.')
             tag = '<span class="ar-zh">精读</span>' if x.get('r') else ''
+            en_t = strip_no(x['t'])
+            en_html = f'<i lang="en">{H.escape(en_t)}</i>' if en_t != zh else ''
             rows.append(
                 f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><span class="ar-n">{cn_num(x["n"]) if x["n"] is not None else "—"}</span>'
-                f'<span class="ar-t"><b>{H.escape(zh)}</b><i lang="en">{H.escape(strip_no(x["t"]))}</i></span>'
+                f'<span class="ar-t"><b>{H.escape(zh)}</b>{en_html}</span>'
                 f'<span class="ar-d">{md}{tag}</span></a></li>')
         label = '年份未知' if y == '0000' else y
         sec.append(f'<section class="ar-year" id="y{y}"><h2>{label}<small>{len(years[y])} 期</small></h2><ol>{"".join(rows)}</ol></section>')

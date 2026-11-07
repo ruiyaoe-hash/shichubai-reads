@@ -173,7 +173,8 @@
     const saved = FAV[e.s]
       ? '<span class="fav-mark" title="已收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg></span>'
       : '';
-    const en = e.zh ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
+    // 中文节目没有独立英文原题时，不把同一句中文重复排成「英文原题」
+    const en = (e.zh && e._en && e._en !== e._zh) ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
     const desc = toks.length && e.ds ? `<div class="card-desc">${hl(e.ds, toks)}</div>` : '';
     return `<a class="card" href="${site('/ep/' + e.s + '/')}">
       <div class="thumb">${thumb}${saved}${prog}</div>
@@ -272,7 +273,7 @@
       <div class="hero-text">
         <div class="hero-kicker">最新精读</div>
         <h2 class="hero-title"><a href="${href}">${esc(e._zh)}</a></h2>
-        <p class="hero-en" lang="en">${esc(e._en)}</p>
+        ${(e.zh && e._en && e._en !== e._zh) ? `<p class="hero-en" lang="en">${esc(e._en)}</p>` : ''}
         ${e.ds ? `<p class="hero-desc">${esc(e.ds)}</p>` : ''}
         <p class="hero-by">${by}</p>
         <a class="hero-cta" href="${href}">阅读全文<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>

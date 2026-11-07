@@ -1,5 +1,27 @@
 [
   {
+    "num": 3,
+    "title": "关于爱情，我终于想明白了几件事",
+    "date": "2026-11-07",
+    "updated": "2026-11-07",
+    "slug": "003-about-love",
+    "sourceLabel": "抖音精选 · 公开视频",
+    "sourceUrl": "https://www.douyin.com/video/7697926023714737408",
+    "rightsHolder": "抖音精选（发布账号待核）",
+    "rightsNotice": "视频页仅显示平台「抖音精选」，未取到发布账号、出镜人物或授权声明；本站未取得任何音视频的复制、传播或改编授权，只提供指向该公开页面的普通外链。",
+    "officialLinks": [
+      {
+        "label": "抖音 · 第叁期节目视频页",
+        "url": "https://www.douyin.com/video/7697926023714737408",
+        "kind": "primary",
+        "note": "第叁期节目本身的官方视频页，2026-11-07 核验 GET 200；页面标题为「关于爱情，我终于想明白了几件事」。完整内容在抖音平台内观看，本站不托管音视频。发布账号与出镜人物待核，见 COMPLIANCE.md。"
+      }
+    ],
+    "ytId": null,
+    "cover": "/covers/003-about-love.svg",
+    "reports": []
+  },
+  {
     "num": 2,
     "title": "Building an AI Coding Environment You Can Trust",
     "date": "2026-11-05",
@@ -28,15 +50,15 @@
     "updated": "2026-11-04",
     "slug": "001-jiang-chenglan",
     "sourceLabel": "抖音精选「创作阶梯计划」· 陈鲁豫对谈姜乘澜",
-    "sourceUrl": "https://www.douyin.com/search/%E5%A7%9C%E4%B9%98%E6%BE%9C",
+    "sourceUrl": "https://www.douyin.com/video/7702304629450607887",
     "rightsHolder": "抖音精选「创作阶梯计划」、@陈鲁豫、@姜乘澜",
     "rightsNotice": "嘉宾官方抖音主页标注「全网同名，只此一号，没有小号。暂未授权切片。」；本站未取得任何音视频的复制、传播或改编授权。",
     "officialLinks": [
       {
-        "label": "抖音精选 · 完整对谈（搜索「姜乘澜」）",
-        "url": "https://www.douyin.com/search/%E5%A7%9C%E4%B9%98%E6%BE%9C",
+        "label": "抖音 · 第壹期节目视频页",
+        "url": "https://www.douyin.com/video/7702304629450607887",
         "kind": "primary",
-        "note": "权利人自行发布的完整对谈，2026-10-30 12:00 上线。网页端受限时请在抖音 App 内搜索「姜乘澜」（抖音号 JCLjiangchenglan）。"
+        "note": "第壹期节目本身的官方视频页，由站点所有者于 2026-11-07 确认；2026-10-30 12:00 上线。完整内容在抖音平台内观看，本站不托管音视频。网页端受限时请在抖音 App 内搜索「姜乘澜」（抖音号 JCLjiangchenglan）。"
       },
       {
         "label": "创作阶梯计划 · 官方对谈预告与观看指引",
