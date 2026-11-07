@@ -11,7 +11,8 @@
   tools/index.template.html 首页模板（site/index.html 由此生成，不要直接改产物）
   site/zh/{slug}.html       中文精读正文片段
   site/data/zh-index.json   已有精读的 slug 列表
-  site/covers/              三期成套封面 SVG：左侧标题网格 + 右侧视频帧铅笔素描（内嵌 WebP data URI），日读 / 夜读各一张
+  site/covers/              三期成套封面 SVG：左侧标题网格 + 右侧主人物图（内嵌 WebP data URI）；
+                            整张满幅纸底一次编码、四边柔和渐隐，日读 / 夜读各一张
 
 输出（发布根目录就是 site/）：
   site/index.html           由模板注入头条、卡片、页脚及站点绝对路径
