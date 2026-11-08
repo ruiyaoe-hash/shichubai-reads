@@ -83,7 +83,7 @@
   toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   document.body.appendChild(toTop);
 
-  /* ---------- 内容 tab：中文精读 / 英文文稿 ---------- */
+  /* ---------- 内容 tab：中文精读 / 原创作品 / 文字记录（标签文案由 build.py 按形态生成） ---------- */
   const tabsRow = $('.tabs');
   const tabBtns = $$('.tab-btn');
   const panels = $$('.tab-panel');

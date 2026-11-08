@@ -7,10 +7,11 @@
 输入：
   tools/lex-master.json     单集目录（最新在前）。每期的 officialLinks 是权利人自行
                             发布的官方页面外链；本站不保存、不嵌入任何音视频文件。
+                            kind: reading（默认）= 中文精读；original = 岛主原创作品
   tools/translations.json   中文标题 / 嘉宾 / 简介
   tools/index.template.html 首页模板（site/index.html 由此生成，不要直接改产物）
-  site/zh/{slug}.html       中文精读正文片段
-  site/data/zh-index.json   已有精读的 slug 列表
+  site/zh/{slug}.html       正文片段（中文精读或岛主原创作品）
+  site/data/zh-index.json   已有正文的 slug 列表
   site/covers/              三期成套封面 SVG：左侧标题网格 + 右侧主人物图（内嵌 WebP data URI）；
                             整张满幅纸底一次编码、四边柔和渐隐，日读 / 夜读各一张
 
@@ -57,7 +58,7 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 7, 6, 3
+CSS_V, APP_V, EP_V = 8, 7, 4
 SITE_NAME = '初白de小岛'
 SITE_SUB = '中文精读 · 精神小岛'
 IP_NAME = '时初白'
@@ -82,6 +83,40 @@ def cn_num(n):
 def ep_label(n):
     """展示用期号：第壹期 / 第贰期；无编号时为特别篇。"""
     return f'第{cn_num(n)}期' if isinstance(n, int) and n > 0 else '特别篇'
+
+
+# 内容形态只决定展示口径，不代表版权审核状态；逐篇来源与审核记录一律在 COMPLIANCE.md。
+# 与 PLATFORM.md v0.3 的内容模型 kind: reading | original 对齐。
+# reading  = 依据已公开材料写的中文精读 / 整理评述，官方页面是「原片入口」。
+# original = 岛主独立创作的原创作品，官方页面降级为「本期话题来源」，
+#            不声称整理、转述或改编关系，也不输出 isBasedOn。
+def kind_of(e):
+    return e.get('kind') or 'reading'
+
+
+FORM = {
+    'reading': {
+        'tag': '中文精读', 'tab': '中文精读', 'hero': '最新精读', 'unit': '精读约',
+        'cta': '阅读全文', 'toc': '精读目录', 'md': '中文精读 Markdown',
+        'src': '去官方看完整内容', 'src_note': '原片在发布方平台，本站不托管',
+        'res_note': '本站内容依据已公开材料整理与评述，不是官方文稿、不是逐字稿，也未经讲者或发布方审阅。',
+        'md_note': f'{SITE_NAME} 的中文整理与评述，依据已公开材料写成，非官方授权文稿；原话与完整语境以官方渠道为准。引用请链到网页版。',
+    },
+    'original': {
+        'tag': '原创作品', 'tab': '原创作品', 'hero': '最新作品', 'unit': '全文约',
+        'cta': '阅读原文', 'toc': '作品目录', 'md': '原创作品 Markdown',
+        'src': '本期话题来源', 'src_note': '正文为岛主独立创作，与视频内容无整理或转述关系',
+        'res_note': '本篇为岛主原创作品，不是任何视频的整理、转述或评述；所列视频页仅作话题来源。',
+        'md_note': f'{IP_NAME}原创作品，非整理、非转述；转载请署名「{SITE_NAME}」并链接到网页版。',
+    },
+}
+
+
+def form_of(item):
+    """item 可以是 master 条目，也可以是 episodes.json 的数据项。"""
+    if isinstance(item, dict):
+        return FORM['original' if (item.get('kind') or item.get('k')) == 'original' else 'reading']
+    return FORM['reading']
 
 
 def sp(path):
@@ -313,7 +348,7 @@ EP_SHELL = """<!DOCTYPE html>
       {prevnext}
     </nav>
   </article>
-  <aside class="ep-toc" aria-label="精读目录"></aside>
+  <aside class="ep-toc" aria-label="{toc_label}"></aside>
 </main>
 {site_footer}
 <script src="{ep_href}"></script>
@@ -400,6 +435,7 @@ def build_data():
             'guest': info.get('guest'),
             'tr': tag, 'ln': len(official_links(e)),
             'r': 1 if e['slug'] in ZH and (SITE / 'zh' / f"{e['slug']}.html").exists() else 0,
+            'k': kind_of(e),
             'ds': info.get('desc'),
         })
     out = {'updated': TODAY, 'episodes': eps}
@@ -477,6 +513,8 @@ def thumb_img(x, hero=False):
 
 def build_page(i, eps):
     e = master[i]
+    orig = kind_of(e) == 'original'
+    F = form_of(e)
     slug, num, title = e['slug'], e.get('num'), e['title']
     d = e.get('date') or ''
     y = e.get('ytId') or None
@@ -521,40 +559,60 @@ def build_page(i, eps):
             {"@type": "ListItem", "position": 1, "name": "首页", "item": absu('/')},
             {"@type": "ListItem", "position": 2, "name": plain, "item": url}]},
     ]}
+    if orig:
+        # 原创作品不声明「基于」某个视频：那会凭空制造一层改编关系。
+        # 作者改为个人，视频只作为 citation 里的话题来源出现。
+        art = ld['@graph'][0]
+        art.pop('alternativeHeadline', None)
+        art.pop('isBasedOn', None)
+        art['author'] = {"@type": "Person", "name": IP_NAME, "url": absu('/')}
+        art['genre'] = F['tag']
+        if e.get('sourceUrl'):
+            art['citation'] = {"@type": "VideoObject",
+                               "name": e.get('sourceTitle') or e.get('title'),
+                               "url": e['sourceUrl']}
     ldjson = json.dumps(prune(ld), ensure_ascii=False).replace('<', '\\u003c')
 
     h1 = H.escape(plain)
     # 没有英文原标题的中文节目不显示重复的一行；001/002 的英文原题照常显示。
-    orig_line = f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>' if zh_title and strip_no(title) != plain else ''
+    # 原创作品的 title 就是本篇题名，不另排一行「原题」。
+    orig_line = (f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>'
+                 if zh_title and strip_no(title) != plain and not orig else '')
     kicker_bits = [ep_label(num)]
     if has_zh:
-        kicker_bits.append('<span class="k-zh">中文精读</span>')
+        kicker_bits.append(f'<span class="k-zh{" is-original" if orig else ""}">{F["tag"]}</span>')
     kicker = '<span class="k-sep">·</span>'.join(kicker_bits)
-    dek = f'<p class="ep-dek">{H.escape(lede)}</p>' if lede else ''
+    # 原创作品把题记放在标题下当副题，正文片段从故事第一段开始，避免题名重复。
+    if orig and e.get('subtitle'):
+        dek = f'<p class="ep-dek ep-subline">{H.escape(e["subtitle"])}</p>'
+    else:
+        dek = f'<p class="ep-dek">{H.escape(lede)}</p>' if lede else ''
     by = []
-    if guest:
+    if orig:
+        by.append(f'<span>{IP_NAME}</span>')
+    elif guest:
         by.append(f'<span>{H.escape(guest)}</span>')
     if d:
         by.append(f'<time datetime="{H.escape(d)}">{fmt_date(d)}</time>')
-    if e.get('sourceLabel'):
+    if e.get('sourceLabel') and not orig:
         by.append(f'<span>{H.escape(e["sourceLabel"])}</span>')
     if read_min:
         wan = f'{zh_chars / 10000:.1f} 万字' if zh_chars >= 10000 else f'{zh_chars} 字'
-        by.append(f'<span>精读约 {wan} · 阅读 {read_min} 分钟</span>')
+        by.append(f'<span>{F["unit"]} {wan} · 阅读 {read_min} 分钟</span>')
     byline = '<span class="k-sep">·</span>'.join(by)
 
     primary = next((lk for lk in links if lk['kind'] == 'primary'), links[0] if links else None)
     if primary:
         media_html = (
             '<p class="ep-source"><a href="' + H.escape(primary['url']) + '" '
-            'target="_blank" rel="noopener noreferrer">去官方看完整内容 <span aria-hidden="true">↗</span></a>'
-            '<span class="ep-source-note">原片在发布方平台，本站不托管</span></p>')
+            'target="_blank" rel="noopener noreferrer">' + F['src'] + ' <span aria-hidden="true">↗</span></a>'
+            '<span class="ep-source-note">' + F['src_note'] + '</span></p>')
     else:
         media_html = ''
 
     tabs = ['<div class="tabs" role="tablist">']
     if has_zh:
-        tabs.append('<button class="tab-btn" type="button" data-tab="zh" role="tab" aria-controls="panel-zh">中文精读</button>')
+        tabs.append(f'<button class="tab-btn" type="button" data-tab="zh" role="tab" aria-controls="panel-zh">{F["tab"]}</button>')
     if tr_tag:
         tabs.append('<button class="tab-btn" type="button" data-tab="tr" role="tab" aria-controls="panel-tr">文字记录</button>')
     tabs.append('</div>')
@@ -569,22 +627,32 @@ def build_page(i, eps):
         panel_tr = (f'<div class="tab-panel" id="panel-tr" data-panel="tr">'
                     f'<div class="tr-note">本地文字记录，仅在仓库提供纯文本时出现。</div>'
                     f'<div class="transcript-text">{H.escape(tr_text)}</div></div>')
-    # 正文由岛主自行撰写的期次，先把状态说清楚，不要显示成出错的空页。
-    no_tr_note = '' if (has_zh or tr_tag) else '<div class="ep-notice">本篇中文精读正在撰写中，完成后更新。完整内容请前往官方视频页观看。</div>'
+    # 正文后补的期次，先把状态说清楚，不要显示成出错的空页；措辞对两种形态都成立。
+    no_tr_note = '' if (has_zh or tr_tag) else '<div class="ep-notice">本篇正文正在撰写中，完成后更新。</div>'
 
     res = ['<section class="ep-resources"><div class="res-h">本集资源与出处</div><ul>']
-    res.append(f'<li><span class="res-k">嘉宾</span>{H.escape(guest or "—")}</li>')
-    res.append(f'<li><span class="res-k">来源</span>{H.escape(e.get("sourceLabel") or "公开访谈")}'
-               f'<span class="res-sub">发布日 {H.escape(d) or "待核"}</span></li>')
-    if e.get('sourceUrl'):
-        res.append(f'<li><span class="res-k">原片</span><a href="{H.escape(e["sourceUrl"])}" target="_blank" rel="noopener noreferrer">官方发布渠道</a></li>')
+    if orig:
+        # 原创作品的「出处」要写清作者与形态，视频只能占「话题来源」一格。
+        res.append(f'<li><span class="res-k">作者</span>{H.escape(IP_NAME)}</li>')
+        res.append('<li><span class="res-k">形态</span>岛主原创作品'
+                   '<span class="res-sub">非整理、非转述、非评述</span></li>')
+        res.append(f'<li><span class="res-k">话题来源</span>{H.escape(e.get("sourceTitle") or e.get("sourceLabel") or "公开视频")}'
+                   f'<span class="res-sub">{H.escape(e.get("sourceLabel") or "")}</span></li>')
+        if e.get('sourceUrl'):
+            res.append(f'<li><span class="res-k">视频</span><a href="{H.escape(e["sourceUrl"])}" target="_blank" rel="noopener noreferrer">话题来源视频页</a></li>')
+    else:
+        res.append(f'<li><span class="res-k">嘉宾</span>{H.escape(guest or "—")}</li>')
+        res.append(f'<li><span class="res-k">来源</span>{H.escape(e.get("sourceLabel") or "公开访谈")}'
+                   f'<span class="res-sub">发布日 {H.escape(d) or "待核"}</span></li>')
+        if e.get('sourceUrl'):
+            res.append(f'<li><span class="res-k">原片</span><a href="{H.escape(e["sourceUrl"])}" target="_blank" rel="noopener noreferrer">官方发布渠道</a></li>')
     for lk in links:
         if lk['kind'] != 'primary':
             res.append(f'<li><span class="res-k">官方</span><a href="{H.escape(lk["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(lk["label"])}</a></li>')
     for rep_ in e.get('reports') or []:
         if rep_.get('url'):
             res.append(f'<li><span class="res-k">报道</span><a href="{H.escape(rep_["url"])}" target="_blank" rel="noopener noreferrer">{H.escape(rep_.get("label") or rep_["url"])}</a></li>')
-    res.append('</ul><p class="res-note">本站内容依据已公开材料整理与评述，不是官方文稿、不是逐字稿，也未经讲者或发布方审阅。'
+    res.append(f'</ul><p class="res-note">{F["res_note"]}'
                f'<a href="{sp("/disclaimer/")}">版权与说明</a></p></section>')
     resources = ''.join(res)
 
@@ -608,10 +676,12 @@ def build_page(i, eps):
         ldjson=ldjson, css_href=f'{sp("/style.css")}?v={CSS_V}', ep_href=f'{sp("/ep.js")}?v={EP_V}',
         theme_script=THEME_SCRIPT, feed_link=feed_link(), site_footer=site_footer(),
         h1=h1, orig_line=orig_line, kicker=kicker, dek=dek, byline=byline,
-        main_cls=' has-toc' if has_zh else '',
+        # 与 ep.js 的「超过 2 个 h2 才出目录」一致；纯叙事作品没有章节标题，别留空侧栏。
+        main_cls=' has-toc' if has_zh and zh_raw.count('<h2') > 2 else '',
         article_meta=(f'<meta property="article:published_time" content="{d}">' if d else '') +
                      (f'<meta property="article:modified_time" content="{updated}">' if updated else ''),
-        md_link=(f'<link rel="alternate" type="text/markdown" title="中文精读 Markdown" href="{sp("/ep/" + slug + "/index.md")}">' if has_zh else ''),
+        md_link=(f'<link rel="alternate" type="text/markdown" title="{F["md"]}" href="{sp("/ep/" + slug + "/index.md")}">' if has_zh else ''),
+        toc_label=F['toc'],
         head_extra=head_extra(), site_header=site_header(),
         media_html=media_html, tab_buttons=tab_buttons,
         panel_zh=panel_zh, panel_tr=panel_tr, no_tr_note=no_tr_note,
@@ -622,12 +692,20 @@ def build_page(i, eps):
     dest.write_text(page)
     md = dest.parent / 'index.md'
     if has_zh:
-        head = [f'# {plain}', '', f'> {lede or ""}', '',
-                f'- 英文题：{title}', f'- 期数：{ep_label(num)}',
-                f'- 日期：{d}' if d else '', f'- 嘉宾：{guest}' if guest else '',
-                f'- 来源：{e.get("sourceLabel") or ""}', f'- 网页：{url}',
-                f'- 约 {zh_chars} 字（阅读约 {read_min} 分钟）', '',
-                f'> {SITE_NAME} 的中文整理与评述，依据已公开材料写成，非官方授权文稿；原话与完整语境以官方渠道为准。引用请链到网页版。', '']
+        if orig:
+            head = [f'# {plain}', '', f'> {lede or ""}', '',
+                    f'- 副题：{e.get("subtitle") or ""}', f'- 作者：{IP_NAME}',
+                    f'- 期数：{ep_label(num)}', f'- 日期：{d}' if d else '',
+                    f'- 形态：{F["tag"]}', f'- 话题来源：{e.get("sourceTitle") or ""}',
+                    f'- 网页：{url}', f'- 约 {zh_chars} 字（阅读约 {read_min} 分钟）', '',
+                    f'> {F["md_note"]}', '']
+        else:
+            head = [f'# {plain}', '', f'> {lede or ""}', '',
+                    f'- 英文题：{title}', f'- 期数：{ep_label(num)}',
+                    f'- 日期：{d}' if d else '', f'- 嘉宾：{guest}' if guest else '',
+                    f'- 来源：{e.get("sourceLabel") or ""}', f'- 网页：{url}',
+                    f'- 约 {zh_chars} 字（阅读约 {read_min} 分钟）', '',
+                    f'> {F["md_note"]}', '']
         md.write_text('\n'.join(head) + '\n' + html_to_md(zh_raw))
     elif md.exists():
         md.unlink()
@@ -637,9 +715,14 @@ def ssr_card(x):
     zh, en = strip_no(x['zh']) or strip_no(x['t']), strip_no(x['t'])
     num = ep_label(x['n'])
     dt = (x['d'] or '')[:7].replace('-', '.')
-    tag = '<span class="zh-tag">中文精读</span>' if x.get('r') else ''
-    # 中文节目没有独立英文原题时，别把同一句中文再排一行当成「英文原题」
-    en_html = f'<div class="card-title-en" lang="en">{H.escape(en)}</div>' if x.get('zh') and en != zh else ''
+    F = form_of(x)
+    is_orig = x.get('k') == 'original'
+    tag = (f'<span class="zh-tag{" is-original" if is_orig else ""}">{F["tag"]}</span>'
+           if x.get('r') else '')
+    # 中文节目没有独立英文原题时，别把同一句中文再排一行当成「英文原题」；
+    # 原创作品的 t 就是本篇题名，更不能拿话题来源的标题冒充原题。
+    en_html = (f'<div class="card-title-en" lang="en">{H.escape(en)}</div>'
+               if x.get('zh') and en != zh and not is_orig else '')
     return (f'<a class="card" href="{sp("/ep/" + x["s"] + "/")}"><div class="thumb">{thumb_img(x)}</div><div class="card-body">'
             f'<div class="card-kicker"><span class="ep-n">{num}</span><span>{dt}</span>{tag}</div>'
             f'<div class="card-title">{H.escape(zh)}</div>{en_html}</div></a>')
@@ -651,13 +734,16 @@ def ssr_hero(x):
     when = fmt_date(d)
     by = ' · '.join(H.escape(v) for v in [x.get('guest'), when, ep_label(x['n']) if x['n'] is not None else ''] if v)
     desc = f'<p class="hero-desc">{H.escape(x["ds"])}</p>' if x.get('ds') else ''
-    en_line = f'<p class="hero-en" lang="en">{H.escape(en)}</p>' if x.get('zh') and en != zh else ''
+    is_orig = x.get('k') == 'original'
+    F = form_of(x)
+    en_line = (f'<p class="hero-en" lang="en">{H.escape(en)}</p>'
+               if x.get('zh') and en != zh and not is_orig else '')
     href = sp(f'/ep/{x["s"]}/')
     return (f'<a class="hero-media" href="{href}" tabindex="-1" aria-hidden="true">{thumb_img(x, hero=True)}</a>'
-            f'<div class="hero-text"><div class="hero-kicker">最新精读</div>'
+            f'<div class="hero-text"><div class="hero-kicker">{F["hero"]}</div>'
             f'<h2 class="hero-title"><a href="{href}">{H.escape(zh)}</a></h2>'
             f'{en_line}{desc}<p class="hero-by">{by}</p>'
-            f'<a class="hero-cta" href="{href}">阅读全文<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>')
+            f'<a class="hero-cta" href="{href}">{F["cta"]}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>')
 
 
 def sync_index(eps):
@@ -681,7 +767,7 @@ def sync_index(eps):
          "itemListElement": [{"@type": "ListItem", "position": k + 1, "url": absu(f'/ep/{x["s"]}/'),
                               "name": strip_no(x['zh']) or x['t']} for k, x in enumerate(eps[:30])]},
     ]}
-    # 方案 B：hero 是「最新精读」门面，网格从第二期开始排，消除上下重复。
+    # 方案 B：hero 是最新一期的门面（可能是精读，也可能是原创作品），网格从第二期开始排，消除上下重复。
     # 单期时网格本就隐藏，这里保持同样条件以免 SSR 与运行时不一致。
     grid_eps = [x for x in eps[:30]
                 if not (len(eps) > 1 and latest and x['s'] == latest['s'])]
@@ -702,8 +788,9 @@ def sync_index(eps):
         if n != 1:
             raise SystemExit(f'index.html missing marker lex:{k}')
     if latest:
+        hero_label = form_of(latest)['hero']
         html = re.sub(r'<section class="hero" id="hero"[^>]*>',
-                      f'<section class="hero" id="hero" data-s="{latest["s"]}" aria-label="最新精读">', html, count=1)
+                      f'<section class="hero" id="hero" data-s="{latest["s"]}" aria-label="{hero_label}">', html, count=1)
     html = re.sub(r'(<html\b[^>]*\bdata-base=")[^"]*"', rf'\1{BASE}"', html, count=1)
     html = re.sub(r'<title>[^<]*</title>', f'<title>{H.escape(title)}</title>', html, count=1)
     html = re.sub(r'(<meta name="description" content=")[^"]*"', rf'\1{H.escape(desc)}"', html, count=1)
@@ -767,7 +854,7 @@ def build_disclaimer():
   <article class="ep">
     <header class="ep-head"><div class="ep-kicker">关于本站</div><h1 class="ep-title">版权、来源与内容说明</h1></header>
     <div class="zh-article disclaimer-body">
-      <p>{SITE_NAME}是一处中文精读的独立记录，与访谈嘉宾、主持人、制作方、播出平台均无隶属、授权或合作关系。本站不是官方站点，也不代表他们的立场。</p>
+      <p>{SITE_NAME}是一处中文精读与原创写作的独立记录，与访谈嘉宾、主持人、制作方、播出平台均无隶属、授权或合作关系。本站不是官方站点，也不代表他们的立场。各期正文的形态在标题下的标签里逐篇标明：「中文精读」是依据公开材料写成的整理与评述，「原创作品」是岛主独立创作的文字。</p>
 
       <h2>一、不托管音视频</h2>
       <p>本站不保存、不复制、不上传、不内嵌、不分发任何访谈视频或音频文件：仓库、Pages 站点与 RSS 中都没有原片文件，也没有指向原片文件的直链。各期只提供<strong>指向权利人自行发布页面</strong>的普通外链（平台内的官方入口、主办方公开发布的图文）。内容的访问、播放与数据都发生在原平台。</p>
@@ -780,12 +867,13 @@ def build_disclaimer():
       <h2>三、中文内容的性质</h2>
       <p>「中文精读」是本站在已公开内容基础上做的中文整理与评述，不是官方文稿，不是逐字稿，也未经讲者、嘉宾或制作方审阅。各期写法并不相同：第壹期依据公开访谈及主办方、媒体的公开报道写成，以介绍与评述为主；第贰期是通读公开视频分享后重新组织结构的中文整理译文，尽量保留讲者实际说出的内容、案例、工具名称、技术细节与关键数据，并附术语表。</p>
       <p>第贰期的篇幅与还原度都高于评论体，接近整场分享的中文呈现，本站<strong>未取得复制、翻译、改编或传播授权</strong>。这是站点所有者在知悉上述边界后作出的选择，并如实记录于此：读者若需要原话、语气与完整语境，请以官方渠道的原视频为准；本站不以任何形态替代原作，也不把转述补写成当事人原话。人名、数字、时间一律以原发布内容为准，可能存在理解偏差、压缩与遗漏。</p>
+      <p>第叁期《门口那盏灯》是<strong>岛主原创的叙事作品</strong>，不是任何视频的整理、翻译、转述或评述，也不依据该视频的讲者、人物或论点写成。页面所列视频只是本期话题来源，正文与其内容没有对应关系，读者不应把这篇作品当作该视频的中文版本。这一期的权利归本站所有者，与所链视频的权利人无关。</p>
 
       <h2>四、封面、姓名与商标</h2>
-      <p>封面为本站自制的文字与几何排版，不使用节目画面、视频帧、剧照、嘉宾肖像或平台标识。两期共用同一版式骨架，期号以汉字数字「壹 / 贰」呈现，与站内「第壹期 / 第贰期」一致。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
+      <p>封面为本站自制排版：左侧固定标题网格，右侧为该期主人物图，右上角只留 <code>NO. 001 / 002 / 003</code> 小编号，三期共用同一套版式。主人物图取自该期公开视频帧、站点所有者提供的卡通头像或人物特写帧，经铅笔素描化或色调处理后嵌入整张暖纸底图。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
 
       <h2>五、代码与正文的许可</h2>
-      <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
+      <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。其中「原创作品」由岛主（{IP_NAME}）独立创作，权利完整归本站所有者；「中文精读」的整理与评述部分归本站，被引用的上游内容仍归各自权利人。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
 
       <h2>六、更正与下架</h2>
       <p>权利人、嘉宾或其代理如认为某处引用、封面或链接不当，或希望撤下某一页，请在 <a href="https://github.com/ruiyaoe-hash/shichubai-reads/issues" target="_blank" rel="noopener noreferrer">仓库开 Issue</a>，说明具体页面与理由。核实后本站会更正、补充出处或删除该页及其构建产物，不要求对方先行提供争议证明。事实性错误同样欢迎指出。</p>
@@ -799,7 +887,7 @@ def build_disclaimer():
     out.parent.mkdir(exist_ok=True)
     out.write_text(page_shell(
         f'版权、来源与内容说明 · {SITE_NAME}',
-        '非官方中文精读站。不保存、不嵌入、不分发访谈音视频，只提供权利人自行发布页面的外链；中文内容不是官方文稿或逐字稿。',
+        '非官方中文精读站，另收录岛主原创作品。不保存、不嵌入、不分发访谈音视频，只提供权利人自行发布页面的外链；精读内容不是官方文稿或逐字稿。',
         body, path='/disclaimer/'))
     print('disclaimer: ok')
 
@@ -815,7 +903,9 @@ def build_archive(eps):
         for x in years[y]:
             zh = strip_no(x['zh']) or strip_no(x['t'])
             md = (x['d'] or '')[5:10].replace('-', '.')
-            tag = '<span class="ar-zh">精读</span>' if x.get('r') else ''
+            is_orig = x.get('k') == 'original'
+            tag = (f'<span class="ar-zh{" is-original" if is_orig else ""}">{"原创" if is_orig else "精读"}</span>'
+                   if x.get('r') else '')
             en_t = strip_no(x['t'])
             en_html = f'<i lang="en">{H.escape(en_t)}</i>' if en_t != zh else ''
             rows.append(
@@ -853,12 +943,13 @@ def build_sitemap(eps):
 
 def build_llms(eps):
     lines = [f'# {SITE_NAME}', '', f'> {TAGLINE}', '',
-             '中文内容依据已公开材料整理与评述，不是官方文稿或逐字稿。本站不托管音视频，只提供官方页面外链。',
+             '本站收录两类正文：「中文精读」依据已公开材料整理与评述，不是官方文稿或逐字稿；「原创作品」为岛主独立创作，不是任何视频的整理或转述。本站不托管音视频，只提供官方页面外链。',
              f'目录：{absu("/archive/")}', f'RSS：{absu("/feed.xml")}', '']
     for x in eps:
         if x['s'] in ZH:
             t = strip_no(x['zh']) or x['t']
-            lines.append(f'- [{t}]({absu("/ep/" + x["s"] + "/index.md")})：{(trans.get(x["s"]) or {}).get("desc", "")}')
+            mark = '【岛主原创】' if x.get('k') == 'original' else '【中文精读】'
+            lines.append(f'- {mark}[{t}]({absu("/ep/" + x["s"] + "/index.md")})：{(trans.get(x["s"]) or {}).get("desc", "")}')
     (SITE / 'llms.txt').write_text('\n'.join(lines) + '\n')
     print('llms.txt: ok')
 
@@ -888,9 +979,13 @@ def build_feed(eps):
         zh_file = SITE / 'zh' / f'{slug}.html'
         body = ''
         if zh_file.exists():
-            body = absolutize(zh_file.read_text()) + (
-                f'<hr><p>本文由{SITE_NAME}依据已公开材料整理，不是官方文稿或逐字稿，也未经讲者或发布方审阅。'
-                f'完整内容请到<a href="{url}">原文所列官方渠道</a>观看；本站不托管音视频。</p>')
+            if x.get('k') == 'original':
+                tail = (f'<hr><p>本文为{IP_NAME}原创作品，与页面所列话题来源无整理、转述或授权关系。'
+                        f'转载请署名并链接到<a href="{url}">原文</a>。</p>')
+            else:
+                tail = (f'<hr><p>本文由{SITE_NAME}依据已公开材料整理，不是官方文稿或逐字稿，也未经讲者或发布方审阅。'
+                        f'完整内容请到<a href="{url}">原文所列官方渠道</a>观看；本站不托管音视频。</p>')
+            body = absolutize(zh_file.read_text()) + tail
         pub = rfc822(x['d'])
         pub_tag = f'<pubDate>{pub}</pubDate>' if pub else ''
         content = f'<content:encoded><![CDATA[{cdata(body)}]]></content:encoded>' if body else ''
@@ -908,7 +1003,7 @@ def build_feed(eps):
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">\n'
         f'<channel><title>{SITE_NAME}</title><link>{absu("/")}</link>'
         f'<atom:link href="{absu("/feed.xml")}" rel="self" type="application/rss+xml"/>'
-        f'<description>{H.escape(SITE_NAME)} · 中文精读全文。本站不托管访谈音视频。</description>'
+        f'<description>{H.escape(SITE_NAME)} · 中文精读与原创作品全文。本站不托管访谈音视频。</description>'
         f'<language>zh-CN</language><lastBuildDate>{last_build}</lastBuildDate>'
         '<generator>shichubai-reads build.py</generator>\n'
         + '\n'.join(items) + '\n</channel></rss>\n')
@@ -922,14 +1017,14 @@ def build_special(eps):
         f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><b>{H.escape(strip_no(x["zh"]) or x["t"])}</b><i>{ep_label(x["n"])}</i></a></li>'
         for x in picks)
     pages = {
-        '404.html': ('页面不存在', '这一页没有找到', '链接可能写错了。回到首页，或从最新的精读读起。', True),
+        '404.html': ('页面不存在', '这一页没有找到', '链接可能写错了。回到首页，或从最新的一期读起。', True),
         'offline.html': ('离线', '现在没有网络', '读过的文章若已缓存，可以返回继续。联网后会再更新。', False),
     }
     for fn, (kicker, h1, dek, show) in pages.items():
         body = f"""<main class="wrap ep-main special" id="main">
   <header class="ep-head"><div class="ep-kicker">{kicker}</div><h1 class="ep-title">{h1}</h1><p class="ep-dek">{dek}</p>
   <p class="special-actions"><a class="more-btn" href="{sp('/')}">回到首页</a><a class="more-btn ghost" href="{sp('/')}#search">搜索</a></p></header>
-  {f'<section class="special-list"><h2>最新精读</h2><ol>{links}</ol></section>' if show else ''}
+  {f'<section class="special-list"><h2>最新内容</h2><ol>{links}</ol></section>' if show else ''}
 </main>"""
         html = page_shell(f'{kicker} · {SITE_NAME}', dek, body, path='/', robots='noindex, noarchive', canonical=False)
         (SITE / fn).write_text(html)
@@ -1025,6 +1120,12 @@ def assert_site():
             # 页面里对 & 做了 HTML 转义，两种形式都算命中。
             if lk['url'] not in text and H.escape(lk['url']) not in text:
                 raise SystemExit('official link missing from episode page: ' + lk['url'])
+        # 形态不变量：原创作品不得声明「基于」某个视频，也不得沿用精读口径。
+        if kind_of(e) == 'original':
+            if 'isBasedOn' in text or '中文精读' in text:
+                raise SystemExit('original work must not use the reading form: ' + e['slug'])
+            if FORM['original']['tag'] not in text:
+                raise SystemExit('original work missing its form label: ' + e['slug'])
     for name in ('app.js', 'ep.js'):
         if 'scb-fav' not in (SITE / name).read_text():
             raise SystemExit(name + ' is missing the favorites store')

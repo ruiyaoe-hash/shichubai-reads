@@ -173,13 +173,16 @@
     const saved = FAV[e.s]
       ? '<span class="fav-mark" title="已收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg></span>'
       : '';
-    // 中文节目没有独立英文原题时，不把同一句中文重复排成「英文原题」
-    const en = (e.zh && e._en && e._en !== e._zh) ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
+    // 中文节目没有独立英文原题时，不把同一句中文重复排成「英文原题」；
+    // 原创作品的 t 就是本篇题名，更不能拿话题来源的标题冒充原题。
+    const isOriginal = e.k === 'original';
+    const en = (e.zh && e._en && e._en !== e._zh && !isOriginal) ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
     const desc = toks.length && e.ds ? `<div class="card-desc">${hl(e.ds, toks)}</div>` : '';
+    const tag = e.r ? `<span class="zh-tag${isOriginal ? ' is-original' : ''}">${isOriginal ? '原创作品' : '中文精读'}</span>` : '';
     return `<a class="card" href="${site('/ep/' + e.s + '/')}">
       <div class="thumb">${thumb}${saved}${prog}</div>
       <div class="card-body">
-        <div class="card-kicker"><span class="ep-n">${num}</span><span>${date}</span>${e.r ? '<span class="zh-tag">中文精读</span>' : ''}</div>
+        <div class="card-kicker"><span class="ep-n">${num}</span><span>${date}</span>${tag}</div>
         <div class="card-title">${hl(e._zh, toks)}</div>
         ${en}${desc}
       </div>
@@ -257,7 +260,7 @@
     // 副标题与「时初白」印章由模板固定，不在运行时覆盖。
   }
 
-  /* ---------- 头条：最新一篇中文精读 ---------- */
+  /* ---------- 头条：最新一篇正文（精读或原创作品） ---------- */
   function renderHero() {
     const box = $('#hero');
     if (!box) return;
@@ -265,18 +268,20 @@
     if (!e || browsing()) { box.hidden = true; return; }
     if (box.dataset.s === e.s) { box.hidden = false; return; }
     box.dataset.s = e.s;
+    const isOriginal = e.k === 'original';
+    box.setAttribute('aria-label', isOriginal ? '最新作品' : '最新精读');
     const d = e.d ? `${e.d.slice(0, 4)} 年 ${+e.d.slice(5, 7)} 月` : '';
     const img = thumbHTML(e, 'hero');
     const by = [e.guest, d, e.n != null ? epLabel(e.n) : ''].filter(Boolean).map(esc).join(' · ');
     const href = site('/ep/' + e.s + '/');
     box.innerHTML = `<a class="hero-media" href="${href}" tabindex="-1" aria-hidden="true">${img}</a>
       <div class="hero-text">
-        <div class="hero-kicker">最新精读</div>
+        <div class="hero-kicker">${isOriginal ? '最新作品' : '最新精读'}</div>
         <h2 class="hero-title"><a href="${href}">${esc(e._zh)}</a></h2>
-        ${(e.zh && e._en && e._en !== e._zh) ? `<p class="hero-en" lang="en">${esc(e._en)}</p>` : ''}
+        ${(e.zh && e._en && e._en !== e._zh && !isOriginal) ? `<p class="hero-en" lang="en">${esc(e._en)}</p>` : ''}
         ${e.ds ? `<p class="hero-desc">${esc(e.ds)}</p>` : ''}
         <p class="hero-by">${by}</p>
-        <a class="hero-cta" href="${href}">阅读全文<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="hero-cta" href="${href}">${isOriginal ? '阅读原文' : '阅读全文'}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>`;
     box.hidden = false;
   }

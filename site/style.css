@@ -220,6 +220,8 @@ svg { display: block; }
 .card-kicker { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
 .card-kicker .ep-n { color: var(--text); font-weight: 600; }
 .card-kicker .zh-tag { color: var(--red); }
+/* 原创作品用陶土色标签与精读区分，不加边框、底色或角标，保持克制。 */
+.card-kicker .zh-tag.is-original, .ep-kicker .k-zh.is-original, .ar-zh.is-original { color: var(--clay); }
 .card-title { font-family: var(--font-display); font-size: 18.5px; font-weight: 700; line-height: 1.45; letter-spacing: .01em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .card:hover .card-title { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
 .card-title-en { color: var(--muted); font-family: var(--font-display); font-style: italic; font-size: 13.5px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
@@ -258,6 +260,8 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; }
 .ep-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4vw, 42px); line-height: 1.3; letter-spacing: .01em; margin: 18px auto 0; max-width: 17em; word-break: keep-all; overflow-wrap: anywhere; text-wrap: balance; }
 .ep-title-en { color: var(--muted); font-family: var(--font-display); font-style: italic; font-size: 16px; line-height: 1.5; margin-top: 14px; }
 .ep-dek { font-family: var(--font-display); font-size: 18.5px; line-height: 1.8; color: var(--text-soft); max-width: 28em; margin: 22px auto 0; text-wrap: pretty; }
+/* 原创作品的题记：比简介小一号、斜体，落在标题正下方，不抢 H1。 */
+.ep-dek.ep-subline { font-style: italic; font-size: 16px; line-height: 1.7; color: var(--muted); letter-spacing: .06em; margin-top: 16px; }
 .ep-byline { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 22px; font-size: 12.5px; color: var(--muted); letter-spacing: .06em; }
 .ep-actions { display: flex; justify-content: center; margin-top: 22px; }
 .fav-btn { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line-strong); color: var(--text); border-radius: 999px; padding: 8px 18px; font-size: 13.5px; letter-spacing: .12em; cursor: pointer; }
