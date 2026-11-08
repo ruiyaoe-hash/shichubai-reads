@@ -30,9 +30,11 @@
 
 2026-11-07 先登记入口与预告态，2026-11-08 正文交付并发布，形态定为 `kind: "original"`。正文是岛主（时初白）独立创作的叙事作品，题记「一个人用一生学习如何去爱」，全文约 1.1 万字；与所链视频的讲者、人物、论点均无对应关系，站内不把它标成「中文精读」，也不在结构化数据里输出 `isBasedOn`。
 
+**形态差异不影响格式**：这一期的封面与站内标题区照样按每期统一格式走——封面用该期原作品题名「关于爱情，我终于想明白了几件事」、英文题名小字 `A Few Things I Finally Figured Out About Love`、人物署名「大麦哥」；单集页、首页门面、归档与 Markdown 同样带这行英文题名。该视频没有官方英文题名，这行是中文题名的**忠实译写、非官方原题**，也不译写《门口那盏灯》本身；「岛主原创」只在单集页文章区注明。
+
 | 类型 | 页面 | 说明 |
 |---|---|---|
-| 本期话题来源 | [抖音 · 公开视频页](https://www.douyin.com/video/7697926023714737408) | 2026-11-07 核验 GET 200；页面标题「关于爱情，我终于想明白了几件事」；发布账号与出镜人物待核。该视频只是话题来源，**不是正文的来源文本** |
+| 本期话题来源 | [抖音 · 公开视频页](https://www.douyin.com/video/7697926023714737408) | 2026-11-07 核验 GET 200；页面标题「关于爱情，我终于想明白了几件事」、副句「爱情可以被解释，但永远无法被解释完。」；出镜人物名「大麦哥」由站点所有者提供，用于封面署名，发布账号仍待核。该视频只是话题来源，**不是正文的来源文本** |
 
 正文片段在 `site/zh/003-about-love.html`，`slug` 已列入 `site/data/zh-index.json`；标题、题记、作者署名、形态标签、话题来源、Markdown 与 RSS 附注都由 `tools/lex-master.json` 与 `tools/translations.json` 一处驱动，重建即生效。来源核查与形态记录见 [COMPLIANCE.md](COMPLIANCE.md) §一、§五之三。
 
@@ -85,7 +87,9 @@ python3 -m http.server 8123 -d /tmp/gh-preview
 
 打开 [http://127.0.0.1:8123/shichubai-reads/](http://127.0.0.1:8123/shichubai-reads/)。Windows PowerShell 可用 `python -m http.server 8123 -d <目录>`，或直接在 `site/` 下起服务（此时相对链接按项目页前缀会失效，仅适合看样式）。
 
-三期封面**成套**：左侧固定标题网格，右侧为该期主人物图，右上角只留 `NO. 001 / 002 / 003` 小编号，不再出现汉字期号。左上角小标签与左下页脚沿用「中文精读」栏目口径，题名、副句与署名取该期原作品内容，三期成套；正文是否为岛主原创**不进封面**，只在单集页文章区注明。第壹、叁期取自该期公开视频帧并做铅笔素描化（灰度反相除法、轮廓梯度增强），第贰期为站点所有者提供的 Lauren 常用卡通头像（浅蓝背景刷成精确纸色、轻降饱和）。整张 1280×720 暖纸底图一次编码、以 WebP data URI 内嵌 SVG，不需要外部资源：主图背景与纸色精确同色，四边用 smoothstep 软遮罩渐隐，源图裁切边落在 alpha=0 区，因此不设外框、对开分栏或光晕，也看不出贴图拼接线。日读为暖纸，夜读为压暗一档的暖纸，两版分别按各自纸色重渲染，按 `data-theme` 切换，不做灰度与放大。站内正文的「第壹期 / 第贰期」汉字期号仍由 `build.py` 的 `cn_num()` / `ep_label()` 与 `app.js` 的 `cnNum()` / `epLabel()` 两处同步生成，与封面编号互不影响。报头有一层极淡暖光，22 秒一次低幅度呼吸，`prefers-reduced-motion` 下静止。
+三期封面**成套**，且**每期格式完全一致**（`assert_site()` 会逐期校验，缺一处就发不出站）。左侧自上而下固定为：`中文精读` 栏目标签 → 中文题名 → **一行英文题名小字** → **该期人物署名** → 左下页脚栏目名与日期；右侧为人物主图，右上角只留 `NO. 001 / 002 / 003` 小编号，不再出现汉字期号。人物署名一律用人物姓名或账号名（陈鲁豫 · 姜乘澜 / Lauren · @poteto / 大麦哥），**不用平台名或机构名**。英文题名优先用原作自带的英文题；原作没有英文题时（第叁期）填忠实译写并在 [COMPLIANCE.md](COMPLIANCE.md) 注明「译写、非官方原题」，不得冒充官方英文题。
+
+这一串字段由 `tools/lex-master.json` 的 `enTitle` / `figure` 一处驱动，同时落到封面、单集页 `ep-title-en`、首页门面 `hero-en`、卡片 `card-title-en`、归档英文小字与 Markdown 头部；改一处即全站生效，不要在各处另写一份。正文是否为岛主原创**不进封面**，只在单集页文章区注明。第壹、叁期取自该期公开视频帧并做铅笔素描化（灰度反相除法、轮廓梯度增强），第贰期为站点所有者提供的 Lauren 常用卡通头像（浅蓝背景刷成精确纸色、轻降饱和）。整张 1280×720 暖纸底图一次编码、以 WebP data URI 内嵌 SVG，不需要外部资源：主图背景与纸色精确同色，四边用 smoothstep 软遮罩渐隐，源图裁切边落在 alpha=0 区，因此不设外框、对开分栏或光晕，也看不出贴图拼接线。日读为暖纸，夜读为压暗一档的暖纸，两版分别按各自纸色重渲染，按 `data-theme` 切换，不做灰度与放大。站内正文的「第壹期 / 第贰期」汉字期号仍由 `build.py` 的 `cn_num()` / `ep_label()` 与 `app.js` 的 `cnNum()` / `epLabel()` 两处同步生成，与封面编号互不影响。报头有一层极淡暖光，22 秒一次低幅度呼吸，`prefers-reduced-motion` 下静止。
 
 ### 自定义域名
 
@@ -101,11 +105,11 @@ SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
 
 目录按**最新在前**排，和首页默认顺序一致。
 
-1. 在 `tools/lex-master.json` 数组**最前面**加一条：`num`、`kind`（`reading` 可省略 / `original`）、`title`、`date`（`YYYY-MM-DD`）、`updated`（本次修订日）、`slug`、`sourceLabel`、`sourceUrl`、`rightsHolder`、`rightsNotice`、`officialLinks`、`cover`、`reports`。原创作品另填 `subtitle`（题记）与 `sourceTitle`（话题来源原题）。`ytId` 只有官方频道且确认允许嵌入时才填，否则 `null`。
+1. 在 `tools/lex-master.json` 数组**最前面**加一条：`num`、`kind`（`reading` 可省略 / `original`）、`title`、`date`（`YYYY-MM-DD`）、`updated`（本次修订日）、`slug`、`sourceLabel`、`sourceUrl`、`rightsHolder`、`rightsNotice`、`officialLinks`、`cover`、`reports`。**每期必填 `enTitle`（英文题名）与 `figure`（人物署名）**：前者优先用原作自带英文题，没有就填忠实译写并注明非官方原题；后者填人物姓名或账号名，不填平台名。原创作品另填 `subtitle`（题记）与 `sourceTitle`（话题来源原题）。`ytId` 只有官方频道且确认允许嵌入时才填，否则 `null`。
 2. **`officialLinks` 是合规红线**：每一项必须是 `https://` 开头、指向**权利人自行发布**的页面。第三方转载、搬运视频、音频/视频文件直链一律不填。没有核实的官方渠道就不填，页面会自动显示「暂无核实过的来源」。
 3. 在 `tools/translations.json` 加同一 `slug`：`zh`、`guest`、`desc`。
 4. 正文片段放 `site/zh/{slug}.html`（只要段落和 `h2` / `hr`，不要整页 HTML，也不要把题名与题记重复写进正文），把 `slug` 加进 `site/data/zh-index.json` 的 `slugs`。
-5. 封面放 `site/covers/`，沿用三期成套版式：左侧标题、右侧主人物图、右上 `NO. 00X` 小编号；整张 1280×720 暖纸底图一次编码，人物四边柔和渐隐、不留拼接边界，日读 / 夜读各一张。第壹、叁期主图取自该期公开视频帧并做铅笔素描化，第贰期为站点所有者提供的 Lauren 常用卡通头像。素材使用由站点所有者决定，记录见 [COMPLIANCE.md](COMPLIANCE.md) §五之二。
+5. 封面放 `site/covers/`，沿用三期成套版式：左侧栏目标签 + 中文题名 + `enTitle` 英文小字 + `figure` 人物署名、右侧主人物图、右上 `NO. 00X` 小编号；四层文字缺一不可，英文小字与人物署名必须与 `lex-master.json` 一字不差，`assert_site()` 会逐张校验日读 / 夜读。整张 1280×720 暖纸底图一次编码，人物四边柔和渐隐、不留拼接边界，日读 / 夜读各一张。第壹、叁期主图取自该期公开视频帧并做铅笔素描化，第贰期为站点所有者提供的 Lauren 常用卡通头像。素材使用由站点所有者决定，记录见 [COMPLIANCE.md](COMPLIANCE.md) §五之二。
 6. `python3 tools/build.py`。构建末尾的 `assert_site()` 会拦截：媒体文件、Release 直链、RSS enclosure、缺失的官方外链、路径前缀错误。
 7. 更新 [COMPLIANCE.md](COMPLIANCE.md) 的核查记录与外链清单。
 

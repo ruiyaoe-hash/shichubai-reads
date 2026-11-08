@@ -15,6 +15,16 @@
   site/covers/              三期成套封面 SVG：左侧标题网格 + 右侧主人物图（内嵌 WebP data URI）；
                             整张满幅纸底一次编码、四边柔和渐隐，日读 / 夜读各一张
 
+【每期统一格式（硬规则，由 assert_site() 校验，不要为一期破例）】
+  封面与站内标题区都按同一串字段走，缺一不可：
+    form 栏目标签「中文精读」→ 中文题名 → enTitle 英文题名小字 → figure 人物署名
+    → 右上 / 页脚 NO.00X 编号与栏目名。
+  人物署名必须用该期人物名，不用平台名、账号名或机构名。
+  enTitle 优先用原作自带英文题；原作没有英文题时填忠实译写，
+  并在 COMPLIANCE.md 与 README 注明「译写、非官方原题」，不得冒充官方英文题。
+  上述字段同时驱动封面、单集页 ep-title-en、首页门面 hero-en、卡片 card-title-en、
+  归档页英文小字与 Markdown 头部，一处改动全站生效，不要在各处另写一份。
+
 输出（发布根目录就是 site/）：
   site/index.html           由模板注入头条、卡片、页脚及站点绝对路径
   site/ep/{slug}/index.html 单集页
@@ -58,7 +68,7 @@ SITE = ROOT.parent / 'site'
 DOMAIN = os.environ.get('SITE_DOMAIN', 'https://ruiyaoe-hash.github.io/shichubai-reads').rstrip('/')
 BASE = os.environ.get('BASE_PATH', urlparse(DOMAIN).path).rstrip('/')
 TODAY = datetime.date.today().isoformat()
-CSS_V, APP_V, EP_V = 8, 7, 4
+CSS_V, APP_V, EP_V = 8, 8, 4
 SITE_NAME = '初白de小岛'
 SITE_SUB = '中文精读 · 精神小岛'
 IP_NAME = '时初白'
@@ -436,6 +446,7 @@ def build_data():
             'tr': tag, 'ln': len(official_links(e)),
             'r': 1 if e['slug'] in ZH and (SITE / 'zh' / f"{e['slug']}.html").exists() else 0,
             'k': kind_of(e),
+            'en': e.get('enTitle') or '',
             'ds': info.get('desc'),
         })
     out = {'updated': TODAY, 'episodes': eps}
@@ -574,10 +585,12 @@ def build_page(i, eps):
     ldjson = json.dumps(prune(ld), ensure_ascii=False).replace('<', '\\u003c')
 
     h1 = H.escape(plain)
-    # 没有英文原标题的中文节目不显示重复的一行；001/002 的英文原题照常显示。
-    # 原创作品的 title 就是本篇题名，不另排一行「原题」。
-    orig_line = (f'<p class="ep-title-en" lang="en">{H.escape(strip_no(title))}</p>'
-                 if zh_title and strip_no(title) != plain and not orig else '')
+    # 每期都有一行英文题名小字：优先取 enTitle（001/002 是原作英文题，
+    # 003 是忠实译写），没有才回退到 title。中英同文时不重复排一行。
+    # 原创作品同样要有这一行——格式统一优先于形态差异，正文形态由标签与文章区说明。
+    en_src = e.get('enTitle') or (strip_no(title) if zh_title and strip_no(title) != plain else '')
+    orig_line = (f'<p class="ep-title-en" lang="en">{H.escape(en_src)}</p>'
+                 if en_src else '')
     kicker_bits = [ep_label(num)]
     if has_zh:
         kicker_bits.append(f'<span class="k-zh{" is-original" if orig else ""}">{F["tag"]}</span>')
@@ -694,6 +707,7 @@ def build_page(i, eps):
     if has_zh:
         if orig:
             head = [f'# {plain}', '', f'> {lede or ""}', '',
+                    f'- 英文题：{e.get("enTitle") or ""}（译写，非官方原题）',
                     f'- 副题：{e.get("subtitle") or ""}', f'- 作者：{IP_NAME}',
                     f'- 期数：{ep_label(num)}', f'- 日期：{d}' if d else '',
                     f'- 形态：{F["tag"]}', f'- 话题来源：{e.get("sourceTitle") or ""}',
@@ -712,24 +726,26 @@ def build_page(i, eps):
 
 
 def ssr_card(x):
-    zh, en = strip_no(x['zh']) or strip_no(x['t']), strip_no(x['t'])
+    zh = strip_no(x['zh']) or strip_no(x['t'])
+    en = strip_no(x.get('en') or x['t'])
     num = ep_label(x['n'])
     dt = (x['d'] or '')[:7].replace('-', '.')
     F = form_of(x)
     is_orig = x.get('k') == 'original'
     tag = (f'<span class="zh-tag{" is-original" if is_orig else ""}">{F["tag"]}</span>'
            if x.get('r') else '')
-    # 中文节目没有独立英文原题时，别把同一句中文再排一行当成「英文原题」；
-    # 原创作品的 t 就是本篇题名，更不能拿话题来源的标题冒充原题。
+    # 每期都带一行英文题名：enTitle 优先，中英同文时不重复排一行。
+    # 原创作品也一样，格式统一优先；形态由标签与文章区说明。
     en_html = (f'<div class="card-title-en" lang="en">{H.escape(en)}</div>'
-               if x.get('zh') and en != zh and not is_orig else '')
+               if x.get('zh') and en != zh else '')
     return (f'<a class="card" href="{sp("/ep/" + x["s"] + "/")}"><div class="thumb">{thumb_img(x)}</div><div class="card-body">'
             f'<div class="card-kicker"><span class="ep-n">{num}</span><span>{dt}</span>{tag}</div>'
             f'<div class="card-title">{H.escape(zh)}</div>{en_html}</div></a>')
 
 
 def ssr_hero(x):
-    zh, en = strip_no(x['zh']) or strip_no(x['t']), strip_no(x['t'])
+    zh = strip_no(x['zh']) or strip_no(x['t'])
+    en = strip_no(x.get('en') or x['t'])
     d = x['d'] or ''
     when = fmt_date(d)
     by = ' · '.join(H.escape(v) for v in [x.get('guest'), when, ep_label(x['n']) if x['n'] is not None else ''] if v)
@@ -737,7 +753,7 @@ def ssr_hero(x):
     is_orig = x.get('k') == 'original'
     F = form_of(x)
     en_line = (f'<p class="hero-en" lang="en">{H.escape(en)}</p>'
-               if x.get('zh') and en != zh and not is_orig else '')
+               if x.get('zh') and en != zh else '')
     href = sp(f'/ep/{x["s"]}/')
     return (f'<a class="hero-media" href="{href}" tabindex="-1" aria-hidden="true">{thumb_img(x, hero=True)}</a>'
             f'<div class="hero-text"><div class="hero-kicker">{F["hero"]}</div>'
@@ -870,7 +886,7 @@ def build_disclaimer():
       <p>第叁期《门口那盏灯》是<strong>岛主原创的叙事作品</strong>，不是任何视频的整理、翻译、转述或评述，也不依据该视频的讲者、人物或论点写成。页面所列视频只是本期话题来源，正文与其内容没有对应关系，读者不应把这篇作品当作该视频的中文版本。这一期的权利归本站所有者，与所链视频的权利人无关。</p>
 
       <h2>四、封面、姓名与商标</h2>
-      <p>封面为本站自制排版：左侧固定标题网格，右侧为该期主人物图，右上角只留 <code>NO. 001 / 002 / 003</code> 小编号，三期共用同一套版式。主人物图取自该期公开视频帧、站点所有者提供的卡通头像或人物特写帧，经铅笔素描化或色调处理后嵌入整张暖纸底图。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
+      <p>封面为本站自制排版：左侧固定标题网格，右侧为该期主人物图，右上角只留 <code>NO. 001 / 002 / 003</code> 小编号，三期共用同一套版式。每期左侧自上而下固定为「中文精读」栏目标签、中文题名、一行英文题名小字、该期人物署名，下方是本站页脚与日期；署名用人物姓名或账号名，不用平台名或机构名。英文题名优先取原作自带的英文题；原作没有英文题时（第叁期）采用忠实译写，<strong>不是该视频的官方英文题名</strong>，也不表示与发布方有翻译或授权关系。主人物图取自该期公开视频帧、站点所有者提供的卡通头像或人物特写帧，经铅笔素描化或色调处理后嵌入整张暖纸底图。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
 
       <h2>五、代码与正文的许可</h2>
       <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。其中「原创作品」由岛主（{IP_NAME}）独立创作，权利完整归本站所有者；「中文精读」的整理与评述部分归本站，被引用的上游内容仍归各自权利人。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
@@ -906,7 +922,7 @@ def build_archive(eps):
             is_orig = x.get('k') == 'original'
             tag = (f'<span class="ar-zh{" is-original" if is_orig else ""}">{"原创" if is_orig else "精读"}</span>'
                    if x.get('r') else '')
-            en_t = strip_no(x['t'])
+            en_t = strip_no(x.get('en') or x['t'])
             en_html = f'<i lang="en">{H.escape(en_t)}</i>' if en_t != zh else ''
             rows.append(
                 f'<li><a href="{sp("/ep/" + x["s"] + "/")}"><span class="ar-n">{cn_num(x["n"]) if x["n"] is not None else "—"}</span>'
@@ -1120,6 +1136,24 @@ def assert_site():
             # 页面里对 & 做了 HTML 转义，两种形式都算命中。
             if lk['url'] not in text and H.escape(lk['url']) not in text:
                 raise SystemExit('official link missing from episode page: ' + lk['url'])
+        # 每期统一格式不变量：英文题名与人物署名必须同时存在于数据、
+        # 单集页标题区和日读 / 夜读两张封面，缺一处就发不出站。
+        # 这是格式校验，不审内容措辞；换译写时只需同步改这几处。
+        en_title = (e.get('enTitle') or '').strip()
+        figure = (e.get('figure') or '').strip()
+        if not en_title or not figure:
+            raise SystemExit('episode missing enTitle / figure: ' + e['slug'])
+        if f'<p class="ep-title-en" lang="en">{H.escape(en_title)}</p>' not in text:
+            raise SystemExit('episode page missing English title line: ' + e['slug'])
+        cv = SITE / (e.get('cover') or '').lstrip('/')
+        for cover in (cv, cv.with_name(cv.name.replace('.svg', '-dark.svg'))):
+            if not cover.exists():
+                raise SystemExit('missing cover: ' + cover.name)
+            cs = cover.read_text()
+            if H.escape(en_title) not in cs:
+                raise SystemExit('cover missing English title: ' + cover.name)
+            if H.escape(figure) not in cs:
+                raise SystemExit('cover missing figure credit: ' + cover.name)
         # 形态不变量：原创作品不得声明「基于」某个视频，也不得沿用精读口径。
         if kind_of(e) == 'original':
             if 'isBasedOn' in text or '中文精读' in text:

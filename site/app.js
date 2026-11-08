@@ -83,7 +83,9 @@
 
   function indexEntry(e) {
     e._zh = stripNum(e.zh) || stripNum(e.t);
-    e._en = stripNum(e.t);
+    // 英文题名统一取 enTitle（001/002 是原作英文题，003 是忠实译写），
+    // 老数据没有该字段时才回退到 t；每期都保留一行英文，格式不因形态而破例。
+    e._en = stripNum(e.en) || stripNum(e.t);
     const head = (t) => (t || '').split(/[:：]/)[0];
     e._f = {
       // 嘉宾名通常在标题冒号前，命中它比命中正文话题更相关
@@ -173,10 +175,9 @@
     const saved = FAV[e.s]
       ? '<span class="fav-mark" title="已收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V20.5L12 17.1 5.5 20.5V4.5a1 1 0 0 1 1-1z"/></svg></span>'
       : '';
-    // 中文节目没有独立英文原题时，不把同一句中文重复排成「英文原题」；
-    // 原创作品的 t 就是本篇题名，更不能拿话题来源的标题冒充原题。
+    // 每期都带一行英文题名；中英同文时不重复排。原创作品同样要有，格式统一。
     const isOriginal = e.k === 'original';
-    const en = (e.zh && e._en && e._en !== e._zh && !isOriginal) ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
+    const en = (e.zh && e._en && e._en !== e._zh) ? `<div class="card-title-en" lang="en">${hl(e._en, toks)}</div>` : '';
     const desc = toks.length && e.ds ? `<div class="card-desc">${hl(e.ds, toks)}</div>` : '';
     const tag = e.r ? `<span class="zh-tag${isOriginal ? ' is-original' : ''}">${isOriginal ? '原创作品' : '中文精读'}</span>` : '';
     return `<a class="card" href="${site('/ep/' + e.s + '/')}">
@@ -278,7 +279,7 @@
       <div class="hero-text">
         <div class="hero-kicker">${isOriginal ? '最新作品' : '最新精读'}</div>
         <h2 class="hero-title"><a href="${href}">${esc(e._zh)}</a></h2>
-        ${(e.zh && e._en && e._en !== e._zh && !isOriginal) ? `<p class="hero-en" lang="en">${esc(e._en)}</p>` : ''}
+        ${(e.zh && e._en && e._en !== e._zh) ? `<p class="hero-en" lang="en">${esc(e._en)}</p>` : ''}
         ${e.ds ? `<p class="hero-desc">${esc(e.ds)}</p>` : ''}
         <p class="hero-by">${by}</p>
         <a class="hero-cta" href="${href}">${isOriginal ? '阅读原文' : '阅读全文'}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>

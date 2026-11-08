@@ -4,6 +4,8 @@
     "kind": "original",
     "title": "门口那盏灯",
     "subtitle": "一个人用一生学习如何去爱",
+    "enTitle": "A Few Things I Finally Figured Out About Love",
+    "figure": "大麦哥",
     "sourceTitle": "关于爱情，我终于想明白了几件事",
     "date": "2026-11-08",
     "updated": "2026-11-08",
@@ -11,13 +13,13 @@
     "sourceLabel": "抖音精选 · 公开视频（本期话题来源）",
     "sourceUrl": "https://www.douyin.com/video/7697926023714737408",
     "rightsHolder": "抖音精选（发布账号待核）",
-    "rightsNotice": "正文《门口那盏灯》为岛主（时初白）独立创作的原创作品，不是对该视频的整理、转述、翻译或评述，也不主张任何改编关系；该视频页只是本期话题来源，以普通外链指向。视频页仅显示平台「抖音精选」，未取到发布账号、出镜人物或授权声明；本站未取得任何音视频的复制、传播或改编授权，也不托管音视频文件。",
+    "rightsNotice": "正文《门口那盏灯》为岛主（时初白）独立创作的原创作品，不是对该视频的整理、转述、翻译或评述，也不主张任何改编关系；该视频页只是本期话题来源，以普通外链指向。封面人物署名「大麦哥」由站点所有者提供；`enTitle` 是视频中文题名的忠实译写，该视频没有官方英文题名，站内不得把它写成官方原题。视频页仅显示平台「抖音精选」，未取到发布账号或授权声明；本站未取得任何音视频的复制、传播或改编授权，也不托管音视频文件。",
     "officialLinks": [
       {
         "label": "抖音 · 第叁期话题来源视频页",
         "url": "https://www.douyin.com/video/7697926023714737408",
         "kind": "primary",
-        "note": "本期话题来源的公开视频页，2026-11-07 核验 GET 200；页面标题为「关于爱情，我终于想明白了几件事」。该视频不是本篇正文的来源文本，正文为岛主原创；完整视频在抖音平台内观看，本站不托管音视频。发布账号与出镜人物待核，见 COMPLIANCE.md。"
+        "note": "本期话题来源的公开视频页，2026-11-07 核验 GET 200；页面标题为「关于爱情，我终于想明白了几件事」，副句「爱情可以被解释，但永远无法被解释完。」。该视频不是本篇正文的来源文本，正文为岛主原创；完整视频在抖音平台内观看，本站不托管音视频。出镜人物名「大麦哥」由站点所有者提供，用于封面署名；发布账号仍待核，见 COMPLIANCE.md。"
       }
     ],
     "ytId": null,
@@ -27,6 +29,8 @@
   {
     "num": 2,
     "title": "Building an AI Coding Environment You Can Trust",
+    "enTitle": "Building an AI Coding Environment You Can Trust",
+    "figure": "Lauren · @poteto",
     "date": "2026-11-05",
     "updated": "2026-11-05",
     "slug": "002-poteto-2500-prs",
@@ -49,6 +53,8 @@
   {
     "num": 1,
     "title": "Three Names, Three Acts",
+    "enTitle": "Three Names, Three Acts",
+    "figure": "陈鲁豫 · 姜乘澜",
     "date": "2026-10-30",
     "updated": "2026-11-04",
     "slug": "001-jiang-chenglan",

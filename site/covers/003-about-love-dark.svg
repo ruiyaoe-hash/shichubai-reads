@@ -20,9 +20,9 @@
   <text x="88" y="250" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">关于爱情，</text>
   <text x="88" y="332" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">我终于想明白了</text>
   <text x="88" y="414" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">几件事</text>
-  <text x="88" y="492" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="21" letter-spacing="1" fill="#7A6D5C">爱情可以被解释，但永远无法被解释完。</text>
+  <text x="88" y="492" font-family="Georgia,'Times New Roman',serif" font-size="19" font-style="italic" letter-spacing=".6" fill="#7A6D5C">A Few Things I Finally Figured Out About Love</text>
   <line x1="88" y1="530" x2="168" y2="530" stroke="#A9684B" stroke-width="2"/>
-  <text x="88" y="575" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="23" fill="#3B3229">抖音精选</text>
+  <text x="88" y="575" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="23" fill="#3B3229">大麦哥</text>
   <text x="88" y="668" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="18" letter-spacing="2.5" fill="#7A6D5C">初白de小岛 · 中文精读</text>
   <text x="1192" y="668" text-anchor="end" font-family="Georgia,'Times New Roman',serif" font-size="18" letter-spacing="2" fill="#7A6D5C">2026.11</text>
 </svg>

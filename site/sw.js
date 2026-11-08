@@ -3,7 +3,7 @@
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页
    BASE 取脚本所在目录，项目页子路径与域名根路径都能用。 */
-const VERSION = 'scb-v9';  // 第叁期封面恢复原作品标题：清掉缓存里的旧封面 SVG
+const VERSION = 'scb-v10';  // 三期统一英文题名与人物署名：清掉旧封面与旧首页数据缓存
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
