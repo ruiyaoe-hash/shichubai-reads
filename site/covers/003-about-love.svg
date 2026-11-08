@@ -16,11 +16,13 @@
   <text x="1192" y="72" text-anchor="end" font-family="Georgia,'Times New Roman',serif" font-size="19" letter-spacing="5" fill="#8B7E6E">NO. 003</text>
   <line x1="1168" y1="100" x2="1192" y2="100" stroke="#A9684B" stroke-width="2"/>
   <rect x="88" y="158" width="14" height="14" fill="#A9684B"/>
-  <text x="116" y="177" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="22" letter-spacing="7" fill="#A9684B">原创作品</text>
-  <text x="88" y="332" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">门口那盏灯</text>
-  <text x="88" y="492" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="21" letter-spacing="1" fill="#8B7E6E">一个人用一生学习如何去爱</text>
+  <text x="116" y="177" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="22" letter-spacing="7" fill="#A9684B">中文精读</text>
+  <text x="88" y="250" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">关于爱情，</text>
+  <text x="88" y="332" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">我终于想明白了</text>
+  <text x="88" y="414" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="56" font-weight="600" fill="#3B3229">几件事</text>
+  <text x="88" y="492" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="21" letter-spacing="1" fill="#8B7E6E">爱情可以被解释，但永远无法被解释完。</text>
   <line x1="88" y1="530" x2="168" y2="530" stroke="#A9684B" stroke-width="2"/>
-  <text x="88" y="575" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="23" fill="#3B3229">时初白</text>
-  <text x="88" y="668" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="18" letter-spacing="2.5" fill="#8B7E6E">初白de小岛 · 原创作品</text>
+  <text x="88" y="575" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="23" fill="#3B3229">抖音精选</text>
+  <text x="88" y="668" font-family="'Noto Serif CJK SC','Source Han Serif SC','Songti SC','SimSun',serif" font-size="18" letter-spacing="2.5" fill="#8B7E6E">初白de小岛 · 中文精读</text>
   <text x="1192" y="668" text-anchor="end" font-family="Georgia,'Times New Roman',serif" font-size="18" letter-spacing="2" fill="#8B7E6E">2026.11</text>
 </svg>
