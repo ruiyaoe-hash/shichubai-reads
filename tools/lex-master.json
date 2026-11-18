@@ -1,5 +1,29 @@
 [
   {
+    "num": 4,
+    "title": "The Rise Of AI Coworkers",
+    "enTitle": "The Rise Of AI Coworkers",
+    "figure": "Lauren · @poteto、Roman Ugarte",
+    "date": "2026-11-18",
+    "updated": "2026-11-18",
+    "slug": "004-rise-of-ai-coworkers",
+    "sourceLabel": "Y Combinator · The Light Cone 官方视频",
+    "sourceUrl": "https://www.youtube.com/watch?v=y1-9yeYLJUo",
+    "rightsHolder": "Y Combinator / The Light Cone，以及嘉宾 Lauren Tan、Roman Ugarte",
+    "rightsNotice": "原节目由 Y Combinator 在官方 YouTube 频道以 The Light Cone 节目形式公开发布；本站未取得复制、翻译、改编或传播授权。站内只提供指向该官方观看页的普通外链，不保存、不转存、不嵌入音视频文件。本稿是通读后重新组织结构的中文整理译文，不是官方文稿，也不是逐字稿。整理时依据的是第三方转载的约 55 分钟版本，官方完整版约 60 分 06 秒，开头约 5 分钟未进入正文；完整内容以 Y Combinator 官方视频为准。该第三方转载帖只用作写稿来源，不作为官方外链，也不出现在 officialLinks 中。文末附注提到的英文 ASR 原文另存文件不在本仓库、不随站点发布。",
+    "officialLinks": [
+      {
+        "label": "YouTube · Y Combinator《The Rise Of AI Coworkers》",
+        "url": "https://www.youtube.com/watch?v=y1-9yeYLJUo",
+        "kind": "primary",
+        "note": "Y Combinator 官方频道 The Light Cone 节目官方观看页，2026-11-14 15:21:16（太平洋时间）发布，官方时长 3606 秒（约 60 分 06 秒）。嘉宾为 Lauren Tan（X：@poteto）与 Roman Ugarte（SpaceXSI，Grok Bot 核心团队）。完整内容在 YouTube 观看，本站不托管音视频，也不嵌入该视频（ytId 保持为 null）。本稿整理依据是第三方转载的约 55 分钟版本，开头约 5 分钟未进入正文。"
+      }
+    ],
+    "ytId": null,
+    "cover": "/covers/004-rise-of-ai-coworkers.svg",
+    "reports": []
+  },
+  {
     "num": 3,
     "kind": "original",
     "title": "门口那盏灯",
