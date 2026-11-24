@@ -1,5 +1,52 @@
 [
   {
+    "num": 5,
+    "title": "Xia",
+    "enTitle": "Xia",
+    "figure": "张小珺 · 梁其伟",
+    "date": "2026-11-24",
+    "updated": "2026-11-24",
+    "slug": "005-liang-qiwei-xia",
+    "sourceLabel": "张小珺Jùn｜商业访谈录 · 第 156 期",
+    "sourceUrl": "https://www.xiaoyuzhoufm.com/episode/6af5debf14d01a26f8a900ac",
+    "rightsHolder": "张小珺 / 语言即世界工作室（《张小珺Jùn｜商业访谈录》），以及嘉宾梁其伟",
+    "rightsNotice": "原节目由《张小珺Jùn｜商业访谈录》于 2026-11-13 在小宇宙、YouTube 官方频道（Zhang Xiaojun Podcast）与 B 站官方账号（张小珺商业访谈录）公开发布，时长 6:27:27。本站未取得复制、改编或传播授权，只提供指向这些官方页面的普通外链，不保存、不转存、不嵌入音视频文件。本文为时初白通读访谈后写成的评述文章，不是官方文稿、不是逐字稿，也未经讲者或发布方审阅；原话与完整语境以官方节目为准。英文题 Xia 取自官方 YouTube 英文标题的题名部分。文中 Teahose 链接为第三方摘要站，不是官方纪要。",
+    "officialLinks": [
+      {
+        "label": "小宇宙 · 第 156 期单集页",
+        "url": "https://www.xiaoyuzhoufm.com/episode/6af5debf14d01a26f8a900ac",
+        "kind": "primary",
+        "note": "节目官方单集页（音频 + 视频），2026-11-13 发布，时长 6:27:27。本站不托管音视频。"
+      },
+      {
+        "label": "YouTube · 官方视频版（中英字幕）",
+        "url": "https://www.youtube.com/watch?v=4roDSFRJ1Aw",
+        "kind": "official",
+        "note": "节目官方频道 Zhang Xiaojun Podcast（@xiaojunpodcast）发布的视频版，带可开关的中 / 英字幕，时长 6:27:27。"
+      },
+      {
+        "label": "YouTube · 官方音频版（静态封面）",
+        "url": "https://www.youtube.com/watch?v=uq7aHKfXlJI",
+        "kind": "official",
+        "note": "同一官方频道发布的中文标题版本，画面为静态图，时长 6:27:27。正文开头所链即此版本。"
+      },
+      {
+        "label": "Bilibili · 官方视频版",
+        "url": "https://www.bilibili.com/video/BV1PNWD6LE5p",
+        "kind": "official",
+        "note": "节目官方账号「张小珺商业访谈录」（UID 280780745，小宇宙节目简介中的 B 站链接即指向该账号）发布，带烧录中文字幕。"
+      }
+    ],
+    "ytId": null,
+    "cover": "/covers/005-liang-qiwei-xia.svg",
+    "reports": [
+      {
+        "label": "游民星空 · 梁其伟在竹林采访畅聊 6 小时",
+        "url": "https://www.gamersky.com/news/202611/2246356.shtml"
+      }
+    ]
+  },
+  {
     "num": 4,
     "title": "The Rise Of AI Coworkers",
     "enTitle": "The Rise Of AI Coworkers",
