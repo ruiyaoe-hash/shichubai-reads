@@ -1,0 +1,5 @@
+# Optional runtime for tools/extract_highlight_frames.py and tools/compose_cover.py.
+# tools/build.py stays on the Python standard library.
+numpy>=1.26
+opencv-python-headless>=4.8
+pillow>=10.0
