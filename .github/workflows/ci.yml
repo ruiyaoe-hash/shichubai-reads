@@ -59,3 +59,88 @@ jobs:
           cp -a site /tmp/site-first
           python3 tools/build.py >/dev/null
           diff -rq /tmp/site-first site
+
+  # 与上面的标准库构建分开。opencv / pillow / numpy 只在这个 job 里安装。
+  highlight-cover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cover tool dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+          python3 -m pip install -r tools/requirements-highlight-cover.txt
+      - name: Help
+        run: |
+          python3 tools/extract_highlight_frames.py --help
+          python3 tools/compose_cover.py --help
+      - name: Synthetic smoke
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          import cv2
+          import numpy as np
+          from PIL import Image
+
+          root = Path.cwd()
+          out = Path(tempfile.mkdtemp(prefix="highlight-cover-smoke-"))
+          frames = out / "src"
+          frames.mkdir()
+          rng = np.random.default_rng(5)
+          for i in range(6):
+              img = np.full((360, 640, 3), 108, np.uint8)
+              noise = rng.integers(0, 36, img.shape, dtype=np.uint8)
+              img = cv2.add(img, noise)
+              cv2.rectangle(img, (380, 30), (610, 320), (36, 42, 48), 3)
+              cv2.circle(img, (500, 130), 46, (28, 34, 40), -1)
+              cv2.imwrite(str(frames / f"f{i:02d}.jpg"), img)
+          video = out / "clip.mp4"
+          subprocess.run([
+              "ffmpeg", "-hide_banner", "-y", "-framerate", "1",
+              "-i", str(frames / "f%02d.jpg"),
+              "-frames:v", "6", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+              str(video),
+          ], check=True, capture_output=True)
+          extracted = out / "frames"
+          py = __import__("sys").executable
+          subprocess.run([
+              py, str(root / "tools/extract_highlight_frames.py"), str(video),
+              "--out", str(extracted),
+              "--every", "1", "--skip-head", "0", "--skip-tail", "0",
+              "--min-gap", "1", "--top-k", "4", "--allow-no-face",
+          ], check=True)
+          sheet = extracted / "top_contact_sheet.jpg"
+          assert sheet.is_file() and sheet.stat().st_size > 0, sheet
+          still = next((extracted / "top").glob("*.jpg"))
+          prefix = out / "cover"
+          subprocess.run([
+              py, str(root / "tools/compose_cover.py"), str(still),
+              "--out-prefix", str(prefix),
+              "--title", "烟测／一帧",
+              "--en-title", "Smoke Test",
+              "--figure", "测试人物",
+              "--number", "5",
+              "--date", "2026.11",
+          ], check=True)
+          for name in ("cover.svg", "cover-dark.svg", "cover.png", "cover-dark.png"):
+              path = out / name
+              assert path.is_file() and path.stat().st_size > 0, path
+          for name in ("cover.png", "cover-dark.png"):
+              im = Image.open(out / name)
+              assert im.size == (1280, 720), (name, im.size)
+          day = (out / "cover.svg").read_text(encoding="utf-8")
+          night = (out / "cover-dark.svg").read_text(encoding="utf-8")
+          for text in (day, night):
+              assert 'viewBox="0 0 1280 720"' in text
+              assert "Smoke Test" in text and "测试人物" in text
+              assert "NO. 5" in text
+          print("highlight-cover smoke ok", out)
+          PY
