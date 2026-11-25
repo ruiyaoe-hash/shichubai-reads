@@ -39,6 +39,7 @@
 """
 import datetime
 import email.utils
+import fnmatch
 import html as H
 import json
 import os
@@ -75,6 +76,11 @@ IP_NAME = '时初白'
 # 全站唯一传播语。首页报头、页脚、JSON-LD、llms.txt 全部由这里注入，模板只留占位符。
 # 这句已定为固定对外表述，不要在模板或生成物里另写一份，也不要随手改写措辞。
 TAGLINE = '让阅读产生思想，让思想成为作品。'
+# 分享图（og:image）只用位图：微信、X、Facebook、LinkedIn 的抓取器都不渲染 SVG。
+# 位图由 tools/render_og.py 从已刊封面渲染到 site/og/{slug}.jpg（构建产物，不入库）。
+# 本地没装渲染依赖时退回站点图标；CI 与部署设置 REQUIRE_OG=1，缺图即失败。
+REQUIRE_OG = os.environ.get('REQUIRE_OG') == '1'
+OG_FALLBACK = ('/icon-512.png', 'image/png', 512, 512)
 
 CN_DIGITS = '零壹贰叁肆伍陆柒捌玖'
 
@@ -315,8 +321,8 @@ EP_SHELL = """<!DOCTYPE html>
 <meta property="og:url" content="{url}">
 <meta property="og:image" content="{og_img}">
 <meta property="og:image:type" content="{og_type}">
-<meta property="og:image:width" content="1280">
-<meta property="og:image:height" content="720">
+<meta property="og:image:width" content="{og_w}">
+<meta property="og:image:height" content="{og_h}">
 <meta property="og:image:alt" content="{og_title}">
 <meta property="og:site_name" content="{site_name}">
 <meta property="og:locale" content="zh_CN">
@@ -432,6 +438,19 @@ def cover_of(e):
     return None
 
 
+def og_image(x):
+    """返回 (绝对地址, MIME, 宽, 高)。x 是 episodes.json 的数据项。"""
+    slug = (x or {}).get('s')
+    if slug:
+        rel = f'/og/{slug}.jpg'
+        if (SITE / rel.lstrip('/')).exists():
+            return absu(rel), 'image/jpeg', 1280, 720
+        if REQUIRE_OG:
+            raise SystemExit(f'missing share image site{rel}: run tools/render_og.py first')
+    path, mime, w, h = OG_FALLBACK
+    return absu(path), mime, w, h
+
+
 def build_data():
     eps = []
     for e in master:
@@ -542,7 +561,7 @@ def build_page(i, eps):
     title_tag = f'{plain} | {SITE_NAME}' + (f' · {ep_label(num)}' if num else '')
     desc = lede or f'{guest or SITE_NAME}：{plain}'
     og_title = plain
-    og_img = absu(x['cv']) if x.get('cv') else absu('/icon-512.png')
+    og_img, og_mime, og_w, og_h = og_image(x)
 
     zh_raw = zh_file.read_text() if has_zh else ''
     zh_chars = len(re.sub(r'\s+', '', H.unescape(re.sub(r'<[^>]+>', '', zh_raw))))
@@ -685,7 +704,7 @@ def build_page(i, eps):
     page = EP_SHELL.format(
         base=BASE, title_tag=H.escape(title_tag), desc=H.escape(desc), url=url,
         og_title=H.escape(og_title), og_img=og_img,
-        og_type='image/svg+xml' if str(og_img).endswith('.svg') else 'image/png', site_name=SITE_NAME,
+        og_type=og_mime, og_w=og_w, og_h=og_h, site_name=SITE_NAME,
         ldjson=ldjson, css_href=f'{sp("/style.css")}?v={CSS_V}', ep_href=f'{sp("/ep.js")}?v={EP_V}',
         theme_script=THEME_SCRIPT, feed_link=feed_link(), site_footer=site_footer(),
         h1=h1, orig_line=orig_line, kicker=kicker, dek=dek, byline=byline,
@@ -811,10 +830,11 @@ def sync_index(eps):
     html = re.sub(r'<title>[^<]*</title>', f'<title>{H.escape(title)}</title>', html, count=1)
     html = re.sub(r'(<meta name="description" content=")[^"]*"', rf'\1{H.escape(desc)}"', html, count=1)
     html = re.sub(r'(<meta property="og:description" content=")[^"]*"', rf'\1{H.escape(desc)}"', html, count=1)
-    og = absu(latest['cv']) if latest and latest.get('cv') else absu('/icon-512.png')
+    og, og_mime, og_w, og_h = og_image(latest)
     html = re.sub(r'(<meta property="og:image" content=")[^"]*"', rf'\1{H.escape(og)}"', html, count=1)
-    html = re.sub(r'(<meta property="og:image:type" content=")[^"]*"',
-                  rf'\1{"image/svg+xml" if og.endswith(".svg") else "image/png"}"', html, count=1)
+    html = re.sub(r'(<meta property="og:image:type" content=")[^"]*"', rf'\1{og_mime}"', html, count=1)
+    html = re.sub(r'(<meta property="og:image:width" content=")[^"]*"', rf'\g<1>{og_w}"', html, count=1)
+    html = re.sub(r'(<meta property="og:image:height" content=")[^"]*"', rf'\g<1>{og_h}"', html, count=1)
     html = re.sub(r'(style\.css\?v=)\d+', rf'\g<1>{CSS_V}', html)
     html = re.sub(r'(app\.js\?v=)\d+', rf'\g<1>{APP_V}', html)
     # 只有 1 期时，检索工具与重复卡片列表都不出现，首屏只留一篇精读。
@@ -877,6 +897,7 @@ def build_disclaimer():
       <p>第壹期的权利人是抖音精选「创作阶梯计划」、@陈鲁豫 与 @姜乘澜。嘉宾官方主页明确标注「全网同名，只此一号，没有小号。暂未授权切片。」在权利人未开放音频直链或官方嵌入、且已明确表示未授权切片的情形下，本站不提供站内播放器，也不以任何形式转载原片。早期版本曾把整段访谈音频上传到 Release 并在页内播放，该做法已撤销。</p>
       <p>第贰期的原视频由 Lauren（X：@poteto）本人于 X 公开发布，约 38 分钟。本站只提供指向该公开帖文的普通外链，不保存、不转存视频文件。该期正文末尾附注提到的英文 ASR 原文另存文件<strong>不在本仓库、也不随站点发布</strong>，站内没有任何逐字稿文件。</p>
       <p>第肆期的原节目由 Y Combinator 在官方 YouTube 频道以 The Light Cone 节目形式公开发布（《The Rise Of AI Coworkers》）。本站未取得复制、翻译、改编或传播授权。站内只提供指向该官方观看页的普通外链，不保存、不转存、不嵌入音视频文件。本稿是通读后重新组织结构的中文整理译文，不是官方文稿，也不是逐字稿。整理时依据的是第三方转载的约 55 分钟版本，官方完整版约 60 分 06 秒，开头约 5 分钟未进入正文；完整内容以 Y Combinator 官方视频为准。该第三方转载帖只用作写稿来源，不作为官方外链。文末附注提到的英文 ASR 原文另存文件不在本仓库、不随站点发布。</p>
+      <p>第伍期的原节目由《张小珺Jùn｜商业访谈录》于 2026-11-13 在小宇宙、YouTube 官方频道（Zhang Xiaojun Podcast）与 B 站官方账号（张小珺商业访谈录）公开发布，时长约 6 小时 27 分，权利人为张小珺与语言即世界工作室，以及嘉宾梁其伟。本站未取得复制、改编或传播授权，只提供指向这些官方页面的普通外链，不保存、不转存、不嵌入音视频文件。</p>
 
       <h2>二、外链的边界</h2>
       <p>外链只是索引，不等于获得授权，也不把第三方内容变成本站内容。本站不绕过平台的登录、付费或地域限制，不抓取、不缓存、不改写被链页面，不使用对方的名称、标识或节目包装来暗示合作。被链页面若下线或变更，本站不承担其内容可用性，也不对其中的广告、评论或信息收集负责。</p>
@@ -886,9 +907,10 @@ def build_disclaimer():
       <p>第贰期的篇幅与还原度都高于评论体，接近整场分享的中文呈现，本站<strong>未取得复制、翻译、改编或传播授权</strong>。这是站点所有者在知悉上述边界后作出的选择，并如实记录于此：读者若需要原话、语气与完整语境，请以官方渠道的原视频为准；本站不以任何形态替代原作，也不把转述补写成当事人原话。人名、数字、时间一律以原发布内容为准，可能存在理解偏差、压缩与遗漏。</p>
       <p>第肆期再次采用整理译文，是站点所有者于 2026-11-17 / 18 重新作出的决定，第贰期例外并不自动适用。实际形态是通读公开对谈后重新组织结构的中文整理译文，16 个正文章节 + 术语表 + 理解指引 + 相关演讲说明，覆盖本稿所依据的约 55 分钟转载版；不是逐句机械对应的翻译，也不是逐字稿。来源结构与第贰期不同：官方完整版在 YC YouTube，写稿依据的是第三方转载的较短版本。本站<strong>未取得</strong>复制、翻译、改编或传播授权。</p>
       <p>第叁期《门口那盏灯》是<strong>岛主原创的叙事作品</strong>，不是任何视频的整理、翻译、转述或评述，也不依据该视频的讲者、人物或论点写成。页面所列视频只是本期话题来源，正文与其内容没有对应关系，读者不应把这篇作品当作该视频的中文版本。这一期的权利归本站所有者，与所链视频的权利人无关。</p>
+      <p>第伍期是{IP_NAME}通读访谈后写成的<strong>评述文章</strong>，文中另有一则作者自写的武侠短篇。它不是整理译文，不是官方文稿，也不是逐字稿，未经讲者或发布方审阅。已对照官方中文字幕修订的引语以字幕为准，其余引语是作者的转述，没有逐条核对，原话与完整语境以官方节目为准。上站前按事实核对修订了三处，修订记录附在文末。英文题 Xia 取自官方 YouTube 英文标题的题名部分。文中的 Teahose 链接指向第三方摘要站，不是官方纪要。本站<strong>未取得</strong>复制、改编或传播授权。</p>
 
       <h2>四、封面、姓名与商标</h2>
-      <p>封面为本站自制排版：左侧固定标题网格，右侧为该期主人物图，右上角只留 <code>NO. 001 / 002 / 003 / 004</code> 小编号，四期共用同一套版式。每期左侧自上而下固定为「中文精读」栏目标签、中文题名、一行英文题名小字、该期人物署名，下方是本站页脚与日期；署名用人物姓名或账号名，不用平台名或机构名。英文题名优先取原作自带的英文题；原作没有英文题时（第叁期）采用忠实译写，<strong>不是该视频的官方英文题名</strong>，也不表示与发布方有翻译或授权关系。主人物图取自该期公开视频帧、站点所有者提供的卡通头像或人物特写帧，经铅笔素描化或色调处理后嵌入整张暖纸底图。第肆期主图沿用第贰期那张由站点所有者提供的 Lauren 常用卡通头像，不另绘 Roman 肖像。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
+      <p>封面为本站自制排版：左侧固定标题网格，右侧为该期主人物图，右上角只留 <code>NO. 001</code> 到 <code>NO. 005</code> 小编号，五期共用同一套版式。每期左侧自上而下固定为「中文精读」栏目标签、中文题名、一行英文题名小字、该期人物署名，下方是本站页脚与日期；署名用人物姓名或账号名，不用平台名或机构名。英文题名优先取原作自带的英文题；原作没有英文题时（第叁期）采用忠实译写，<strong>不是该视频的官方英文题名</strong>，也不表示与发布方有翻译或授权关系。主人物图取自该期公开视频帧、站点所有者提供的卡通头像或人物特写帧，经铅笔素描化或色调处理后嵌入整张暖纸底图。第肆期主图沿用第贰期那张由站点所有者提供的 Lauren 常用卡通头像，不另绘 Roman 肖像。第伍期主图取自官方视频版的一帧公开画面，经铅笔素描化处理。社交平台的分享图由同一张封面渲染成位图，版式与内容不变。文中出现的姓名、账号名、节目与计划名称仅用于指明整理对象与出处，属描述性使用，不构成商业背书，也不主张任何权利。相关商标、肖像、录音录像制品与节目包装的权利归各自权利人所有。</p>
 
       <h2>五、代码与正文的许可</h2>
       <p>页面壳层代码来自 <a href="https://github.com/joeseesun/lexfridman-cn" target="_blank" rel="noopener noreferrer">joeseesun/lexfridman-cn</a>，以 MIT 许可使用，许可只覆盖代码；LICENSE 中的版权声明按 MIT 要求原样保留。本站中文正文不适用该 MIT 许可，除依法属于合理使用的情形外保留所有权利。其中「原创作品」由岛主（{IP_NAME}）独立创作，权利完整归本站所有者；「中文精读」的整理与评述部分归本站，被引用的上游内容仍归各自权利人。转载或引用请署名「{SITE_NAME}」并链接到对应页面，且不得删改本说明。</p>
@@ -897,6 +919,7 @@ def build_disclaimer():
       <p>权利人、嘉宾或其代理如认为某处引用、封面或链接不当，或希望撤下某一页，请在 <a href="https://github.com/ruiyaoe-hash/shichubai-reads/issues" target="_blank" rel="noopener noreferrer">仓库开 Issue</a>，说明具体页面与理由。核实后本站会更正、补充出处或删除该页及其构建产物，不要求对方先行提供争议证明。事实性错误同样欢迎指出。</p>
       <p>第贰期因采用整理译文形态、还原度高于评论体，如讲者、其代理或发布平台提出异议，本站将直接撤下该页及其构建产物（页面、Markdown、RSS 条目、站点地图与目录），不以声明替代处理。</p>
       <p>第肆期同样采用整理译文，还原度较高且未取得授权，并存在转载版与官方完整档的时长差异。若 Y Combinator、节目方、讲者或其代理提出异议，本站将直接撤下该页及其构建产物，不以声明替代处理。</p>
+      <p>为了让撤下真正可以撤回，RSS 只为岛主原创作品提供全文；中文精读在 RSS 里只有简介与网页链接，全文只放在本站网页上。</p>
 
     </div>
   </article>
@@ -997,14 +1020,18 @@ def build_feed(eps):
         desc = (trans.get(slug) or {}).get('desc') or title
         zh_file = SITE / 'zh' / f'{slug}.html'
         body = ''
-        if zh_file.exists():
-            if x.get('k') == 'original':
+        # 分发面收窄：聚合器与订阅客户端会长期缓存全文，站点撤稿时收不回来。
+        # 只有岛主原创作品在 RSS 里给全文；中文精读只给简介和网页链接，全文留在本站，
+        # 权利人提出异议时可以随页面一并撤下。assert_site() 会拦截精读全文进入 RSS。
+        if x.get('k') == 'original':
+            if zh_file.exists():
                 tail = (f'<hr><p>本文为{IP_NAME}原创作品，与页面所列话题来源无整理、转述或授权关系。'
                         f'转载请署名并链接到<a href="{url}">原文</a>。</p>')
-            else:
-                tail = (f'<hr><p>本文由{SITE_NAME}依据已公开材料整理，不是官方文稿或逐字稿，也未经讲者或发布方审阅。'
-                        f'完整内容请到<a href="{url}">原文所列官方渠道</a>观看；本站不托管音视频。</p>')
-            body = absolutize(zh_file.read_text()) + tail
+                body = absolutize(zh_file.read_text()) + tail
+        else:
+            desc = (f'{desc}<p>中文精读的全文只在本站网页提供，请到<a href="{url}">网页版</a>阅读。'
+                    f'本站内容依据已公开材料整理与评述，不是官方文稿或逐字稿，完整内容以官方渠道为准；'
+                    f'本站不托管音视频。</p>')
         pub = rfc822(x['d'])
         pub_tag = f'<pubDate>{pub}</pubDate>' if pub else ''
         content = f'<content:encoded><![CDATA[{cdata(body)}]]></content:encoded>' if body else ''
@@ -1022,7 +1049,7 @@ def build_feed(eps):
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">\n'
         f'<channel><title>{SITE_NAME}</title><link>{absu("/")}</link>'
         f'<atom:link href="{absu("/feed.xml")}" rel="self" type="application/rss+xml"/>'
-        f'<description>{H.escape(SITE_NAME)} · 中文精读与原创作品全文。本站不托管访谈音视频。</description>'
+        f'<description>{H.escape(SITE_NAME)} · 原创作品提供全文，中文精读只提供简介与网页链接。本站不托管访谈音视频。</description>'
         f'<language>zh-CN</language><lastBuildDate>{last_build}</lastBuildDate>'
         '<generator>shichubai-reads build.py</generator>\n'
         + '\n'.join(items) + '\n</channel></rss>\n')
@@ -1088,6 +1115,90 @@ def clean_stale(eps):
         if d.is_dir() and d.name not in live:
             shutil.rmtree(d)
             print('removed stale', d.name)
+
+# ---------- 发布安全检查（PLATFORM.md §4.3 的白名单与三项安全测试） ----------
+# 这几项只看「哪些文件、哪些路径会被公开」，不审正文措辞：内容审阅仍属人工流程。
+
+def allowed_outputs():
+    """读取 tools/allowed_outputs.txt，把 {slug} 展开为已登记的期数。"""
+    slugs = [e['slug'] for e in master]
+    pats = []
+    for ln in (ROOT / 'allowed_outputs.txt').read_text().splitlines():
+        ln = ln.strip()
+        if not ln or ln.startswith('#'):
+            continue
+        pats.extend([ln.replace('{slug}', s) for s in slugs] if '{slug}' in ln else [ln])
+    return pats
+
+
+def _match(rel, pat):
+    a, b = rel.split('/'), pat.split('/')
+    return len(a) == len(b) and all(fnmatch.fnmatchcase(x, y) for x, y in zip(a, b))
+
+
+def check_allowlist():
+    """测试①：白名单外的文件不得进入发布目录。"""
+    pats = allowed_outputs()
+    stray = []
+    for q in sorted(SITE.rglob('*')):
+        if q.is_file():
+            rel = q.relative_to(SITE).as_posix()
+            if not any(_match(rel, p) for p in pats):
+                stray.append(rel)
+    if stray:
+        raise SystemExit('files outside tools/allowed_outputs.txt would be published: ' + ', '.join(stray[:20]))
+
+
+def _public_texts():
+    for q in SITE.rglob('*'):
+        if q.is_file() and q.suffix in {'.html', '.js', '.css', '.xml', '.txt', '.json', '.webmanifest', '.svg', '.md'}:
+            # 封面里的 base64 位图不是文字，先去掉，免得偶然撞上检查模式
+            yield q, re.sub(r'data:[\w/+.-]+;base64,[A-Za-z0-9+/=\s]+', '', q.read_text(errors='ignore'))
+
+
+def check_exposure():
+    """测试②：RSS、搜索数据、站点地图与所有页面只能指向已登记的期数。"""
+    live = {e['slug'] for e in master}
+    data = json.loads((SITE / 'data' / 'episodes.json').read_text())
+    extra = {x['s'] for x in data.get('episodes', [])} - live
+    for q, text in _public_texts():
+        extra |= set(re.findall(r'/ep/([^/"\'<>\s#?)]+)/', text)) - live
+    if extra:
+        raise SystemExit('unregistered episode exposed in public output: ' + ', '.join(sorted(extra)))
+
+
+PRIVATE_MARKERS = (
+    (r'[A-Za-z]:\\\\?(?:Users|Documents and Settings)\\', 'Windows 本地路径'),
+    (r'(?<![\w.])/(?:Users|home)/[A-Za-z0-9._-]+/', '本地用户目录'),
+    (r'file:///', '本地文件链接'),
+    (r'写作[\\/](?:写作训练|自媒体写作|方法论)', '本地写作工坊路径'),
+    (r'写作训练|修改对照|训练日志', '写作工坊过程材料'),
+)
+
+
+def check_private():
+    """测试③：公开产物里不得出现本地路径、工坊路径与训练过程材料。"""
+    hits = []
+    for q, text in _public_texts():
+        for pat, label in PRIVATE_MARKERS:
+            m = re.search(pat, text)
+            if m:
+                hits.append(f'{q.relative_to(SITE).as_posix()}: {label}（{m.group(0)[:40]}）')
+    if hits:
+        raise SystemExit('private material found in public output: ' + '; '.join(hits[:10]))
+
+
+def check_feed():
+    """中文精读不得以全文进入 RSS；所有分享图必须是位图。"""
+    kinds = {e['slug']: kind_of(e) for e in master}
+    feed = (SITE / 'feed.xml').read_text()
+    for item in re.findall(r'<item>.*?</item>', feed, flags=re.S):
+        m = re.search(r'/ep/([^/]+)/</link>', item)
+        if m and kinds.get(m.group(1)) != 'original' and '<content:encoded>' in item:
+            raise SystemExit('reading episode must not ship full text in RSS: ' + m.group(1))
+    for q in SITE.rglob('*.html'):
+        if re.search(r'<meta (?:property|name)="(?:og|twitter):image" content="[^"]*\.svg"', q.read_text()):
+            raise SystemExit('share image must be a raster image, not SVG: ' + q.relative_to(SITE).as_posix())
 
 
 def assert_site():
@@ -1170,6 +1281,10 @@ def assert_site():
     idx = (SITE / 'index.html').read_text()
     if 'class="mast-motto"' not in idx or H.escape(TAGLINE) not in idx:
         raise SystemExit('site motto missing from homepage')
+    check_feed()
+    check_exposure()
+    check_private()
+    check_allowlist()
     print('checks: ok')
 
 

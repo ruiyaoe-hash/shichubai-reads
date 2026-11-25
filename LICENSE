@@ -28,6 +28,18 @@ https://github.com/joeseesun/lexfridman-cn
 Copyright (c) 2026 向阳乔木 (joeseesun), under the MIT License above.
 That license covers the code only.
 
-Chinese deep-read text under site/zh/ is not licensed under MIT.
-It is commentary by 时初白精读, based on public interviews and reports.
-It is not an official transcript.
+The Chinese text under site/zh/ is not licensed under MIT. All rights are
+reserved except where fair use applies by law. Each episode page labels its
+form:
+
+- "中文精读" (reading), episodes 1, 2, 4 and 5: commentary (episodes 1 and 5,
+  the latter with a short story by the author) or reorganized Chinese
+  renderings (episodes 2 and 4) written by 时初白 from publicly released
+  interviews and talks. They are not official transcripts and are not
+  authorized by the original rights holders; the upstream content remains
+  theirs, and this site claims no rights in it.
+- "原创作品" (original), episode 3: original writing by 时初白. All rights are
+  held by the site owner.
+
+The cover layouts, typesetting and site copy are not covered by MIT either.
+Details: COMPLIANCE.md section 八 (许可边界).
