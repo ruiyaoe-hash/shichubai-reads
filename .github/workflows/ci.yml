@@ -6,12 +6,15 @@ on:
   push:
     branches-ignore: [main]
   workflow_dispatch:
+  # pages.yml 在部署前调用本工作流：推到 main 的提交同样要先过这些检查
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-check-${{ github.ref }}
+  # 带上 github.workflow：被 pages.yml 调用时与部署的并发组分开，互不取消
+  group: build-check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,12 +32,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Share images (og:image)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          python3 -m pip install -r tools/requirements-og.txt
+          python3 tools/render_og.py
       - name: Build (project page)
         if: matrix.mode == 'project-page'
-        run: python3 tools/build.py
+        run: REQUIRE_OG=1 python3 tools/build.py
       - name: Build (custom domain root)
         if: matrix.mode == 'domain-root'
-        run: SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
+        run: REQUIRE_OG=1 SITE_DOMAIN=https://example.com BASE_PATH= python3 tools/build.py
       - name: Every episode has a generated page
         run: |
           python3 - <<'PY'
@@ -53,6 +62,16 @@ jobs:
             exit 1
           fi
           echo "no hosted media"
+      - name: Share images are raster
+        run: |
+          if grep -rInE '<meta (property|name)="(og|twitter):image" content="[^"]*\.svg"' site --include='*.html'; then
+            echo "::error::og:image / twitter:image must not be SVG"
+            exit 1
+          fi
+          echo "share images ok"
+      - name: Release safety tests (PLATFORM.md 4.3)
+        if: matrix.mode == 'project-page'
+        run: python3 tools/safety_test.py
       - name: Build is idempotent
         if: matrix.mode == 'project-page'
         run: |

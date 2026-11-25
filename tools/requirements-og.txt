@@ -1,0 +1,4 @@
+# Optional runtime for tools/render_og.py (social share images).
+# tools/build.py stays on the Python standard library.
+resvg-py>=0.1
+pillow>=10.0

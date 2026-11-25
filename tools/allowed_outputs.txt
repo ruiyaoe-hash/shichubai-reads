@@ -1,0 +1,43 @@
+# 发布目录 site/ 的公开文件白名单（默认拒绝）。
+# 构建结束时，site/ 下任何一个不匹配下列模式的文件都会让构建失败，
+# 防止草稿、私人笔记或工坊材料被一起发布出去（PLATFORM.md §4.3）。
+#
+# 写法：
+#   路径相对 site/，用 / 分隔；* 只匹配一段路径，不跨目录。
+#   {slug} 只展开为 tools/lex-master.json 里已登记的期数，未登记的正文或封面一律拦下。
+# 新增一类公开文件时先改这里，并在 PR 里写明它为什么应该公开。
+
+# 站点外壳
+.nojekyll
+index.html
+404.html
+offline.html
+robots.txt
+sitemap.xml
+feed.xml
+llms.txt
+site.webmanifest
+sw.js
+app.js
+ep.js
+style.css
+icon.svg
+icon-192.png
+icon-512.png
+apple-touch-icon.png
+favicon.ico
+favicon-32.png
+
+# 数据与固定页面
+data/episodes.json
+data/zh-index.json
+archive/index.html
+disclaimer/index.html
+
+# 每期内容
+ep/{slug}/index.html
+ep/{slug}/index.md
+zh/{slug}.html
+covers/{slug}.svg
+covers/{slug}-dark.svg
+og/{slug}.jpg
